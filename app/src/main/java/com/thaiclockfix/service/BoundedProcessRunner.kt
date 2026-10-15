@@ -3,6 +3,7 @@ package com.thaiclockfix.service
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -77,11 +78,20 @@ internal class BoundedProcessRunner(
         }
     }
 
-    private fun readLimited(stream: InputStream): String {
+    private suspend fun readLimited(stream: InputStream): String {
         val output = ByteArrayOutputStream()
         val buffer = ByteArray(4096)
         while (true) {
-            val read = stream.read(buffer)
+            val read =
+                try {
+                    stream.read(buffer)
+                } catch (exception: IOException) {
+                    // Closing process pipes is how execute() unblocks readers during cancellation.
+                    // Preserve the coroutine cancellation instead of leaking the resulting
+                    // "stream closed" IOException as an unrelated command failure.
+                    currentCoroutineContext().ensureActive()
+                    throw exception
+                }
             if (read < 0) break
             if (read > outputLimitBytes - output.size()) {
                 throw IOException("ผลลัพธ์คำสั่งเกินขนาดที่อนุญาต ($outputLimitBytes bytes ต่อ stream)")

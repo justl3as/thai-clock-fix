@@ -28,6 +28,53 @@ class BoundedProcessRunnerTest {
         }
     }
 
+    private class CloseFailureInputStream : InputStream() {
+        val entered = CountDownLatch(1)
+        private val closed = CountDownLatch(1)
+
+        override fun read(): Int {
+            entered.countDown()
+            if (!closed.await(2, TimeUnit.SECONDS)) {
+                throw IOException("stream was not closed")
+            }
+            throw IOException("stream closed")
+        }
+
+        override fun read(
+            bytes: ByteArray,
+            offset: Int,
+            length: Int,
+        ): Int = read()
+
+        override fun close() {
+            closed.countDown()
+        }
+    }
+
+    private class HangingFixtureProcess(
+        private val stdout: CloseFailureInputStream,
+        private val stderr: CloseFailureInputStream,
+    ) : Process() {
+        @Volatile var destroyed = false
+
+        override fun getInputStream() = stdout
+        override fun getErrorStream() = stderr
+        override fun getOutputStream() = ByteArrayOutputStream()
+        override fun waitFor(): Int = throw UnsupportedOperationException("waitFor must not be used")
+        override fun exitValue(): Int = if (destroyed) 143 else throw IllegalThreadStateException("still running")
+
+        override fun destroy() {
+            destroyed = true
+            stdout.close()
+            stderr.close()
+        }
+
+        override fun destroyForcibly(): Process {
+            destroy()
+            return this
+        }
+    }
+
     @Test fun bothStreamsAreDrainedConcurrently() = runBlocking {
         val entered = CountDownLatch(2)
         fun stream(value: String) = object : ByteArrayInputStream(value.toByteArray()) {
@@ -88,6 +135,31 @@ class BoundedProcessRunnerTest {
             process.destroy()
             job.cancelAndJoin()
         }
+    }
+
+    @Test fun cancellationPreservesCancellationWhenClosingPipesFailsReads() = runBlocking {
+        val stdout = CloseFailureInputStream()
+        val stderr = CloseFailureInputStream()
+        val process = HangingFixtureProcess(stdout, stderr)
+
+        supervisorScope {
+            val completion = CompletableDeferred<Throwable?>()
+            val job = launch(Dispatchers.IO) {
+                BoundedProcessRunner({ process }).execute("fixture")
+            }
+            job.invokeOnCompletion { completion.complete(it) }
+
+            assertTrue(stdout.entered.await(1, TimeUnit.SECONDS))
+            assertTrue(stderr.entered.await(1, TimeUnit.SECONDS))
+
+            job.cancel()
+            withTimeout(2_000) { job.join() }
+
+            val cause = withTimeout(2_000) { completion.await() }
+            assertTrue("pipe-close IOException must not replace cancellation: $cause", cause is CancellationException)
+        }
+
+        assertTrue(process.destroyed)
     }
 
     @Test fun partiallyAcquiredPipesAreClosedWhenAGetterFails() = runBlocking {
