@@ -1,11 +1,10 @@
 package com.thaiclockfix.viewmodel
 
 import android.app.Application
-import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.ViewModelStore
 import androidx.test.core.app.ApplicationProvider
-import com.thaiclockfix.data.PreferencesRepository
-import com.thaiclockfix.data.clockDataStore
+import com.thaiclockfix.data.ClockFixPreferences
+import com.thaiclockfix.data.ClockPreferencesStore
 import com.thaiclockfix.model.LocaleMode
 import com.thaiclockfix.service.ApplyResult
 import com.thaiclockfix.service.SystemUiLocaleService
@@ -32,12 +31,13 @@ class ClockFixViewModelTest {
     private val store = ViewModelStore()
     private val main = UnconfinedTestDispatcher()
     private lateinit var manager: ShizukuManager
+    private lateinit var preferences: FixturePreferencesStore
 
-    @Before fun setUp() = runBlocking {
+    @Before fun setUp() {
         Dispatchers.setMain(main)
         app = ApplicationProvider.getApplicationContext()
-        app.clockDataStore.edit { it.clear() }
         manager = ShizukuManager(app)
+        preferences = FixturePreferencesStore()
     }
 
     @After fun tearDown() {
@@ -63,8 +63,63 @@ class ClockFixViewModelTest {
         override fun getAdbCommands(mode: LocaleMode?) = emptyList<String>()
     }
 
+    private class FixturePreferencesStore(
+        initial: ClockFixPreferences = ClockFixPreferences(),
+    ) : ClockPreferencesStore {
+        private val state = MutableStateFlow(initial)
+        override val preferencesFlow = state
+
+        val current: ClockFixPreferences
+            get() = state.value
+
+        override suspend fun saveSelectedLocale(localeTag: String) {
+            state.value = state.value.copy(selectedLocaleTag = localeTag)
+        }
+
+        override suspend fun saveApplySuccess(
+            appliedLocaleTag: String,
+            verifiedLocale: String,
+        ) {
+            state.value =
+                state.value.copy(
+                    lastAppliedLocaleTag = appliedLocaleTag,
+                    lastApplySuccess = true,
+                    lastApplyTimestamp = System.currentTimeMillis(),
+                    lastVerifiedSystemLocale = verifiedLocale,
+                    lastErrorMessage = null,
+                )
+        }
+
+        override suspend fun saveApplyFailure(
+            attemptedLocaleTag: String,
+            errorMessage: String,
+        ) {
+            state.value =
+                state.value.copy(
+                    lastApplySuccess = false,
+                    lastApplyTimestamp = System.currentTimeMillis(),
+                    lastErrorMessage = errorMessage,
+                )
+        }
+
+        override suspend fun saveRestoreDefault(verifiedLocale: String) {
+            state.value =
+                state.value.copy(
+                    lastAppliedLocaleTag = "",
+                    lastApplySuccess = true,
+                    lastApplyTimestamp = System.currentTimeMillis(),
+                    lastVerifiedSystemLocale = verifiedLocale,
+                    lastErrorMessage = null,
+                )
+        }
+
+        override suspend fun updateVerifiedSystemLocale(verifiedLocale: String?) {
+            state.value = state.value.copy(lastVerifiedSystemLocale = verifiedLocale)
+        }
+    }
+
     private fun viewModel(service: FixtureService): ClockFixViewModel {
-        val vm = ClockFixViewModel(app, PreferencesRepository(app), manager, service)
+        val vm = ClockFixViewModel(app, preferences, manager, service)
         store.put("test", vm)
         status(ShizukuStatus.READY)
         return vm
@@ -80,9 +135,8 @@ class ClockFixViewModelTest {
         assertEquals("reset denied", state.lastError)
         assertNull(state.userNotice)
         assertNotEquals("system_default", state.actualSystemUiLocale)
-        val saved = PreferencesRepository(app).preferencesFlow.first()
-        assertFalse(saved.lastApplySuccess)
-        assertEquals("reset denied", saved.lastErrorMessage)
+        assertFalse(preferences.current.lastApplySuccess)
+        assertEquals("reset denied", preferences.current.lastErrorMessage)
     }
 
     @Test fun applyAndRestoreCannotOverlap() = runBlocking {
@@ -225,11 +279,19 @@ class ClockFixViewModelTest {
         val vm = viewModel(FixtureService())
         vm.selectMode(LocaleMode.ENGLISH)
         assertEquals(LocaleMode.ENGLISH, vm.uiState.value.selectedMode)
-        // Persistence happens on DataStore's own IO dispatcher — wait for it.
-        val saved = withTimeout(3_000) {
-            PreferencesRepository(app).preferencesFlow.first { it.selectedLocaleTag == "en-US" }
-        }
-        assertEquals(LocaleMode.ENGLISH, saved.selectedMode)
+        assertEquals(LocaleMode.ENGLISH, preferences.current.selectedMode)
+        assertEquals(LocaleMode.ENGLISH, vm.uiState.value.selectedMode)
+    }
+
+    @Test fun persistedPreferenceCannotOverwriteSessionSelection() = runBlocking {
+        val vm = viewModel(FixtureService())
+
+        vm.selectMode(LocaleMode.ENGLISH)
+        assertEquals(LocaleMode.ENGLISH, preferences.current.selectedMode)
+
+        preferences.saveSelectedLocale(LocaleMode.THAI_BUDDHIST.tag)
+        assertEquals(LocaleMode.THAI_BUDDHIST, preferences.current.selectedMode)
+        assertEquals(LocaleMode.ENGLISH, vm.uiState.value.selectedMode)
     }
 
     @Test fun dialogFlagsRoundTripThroughUiState() {
@@ -266,6 +328,7 @@ class ClockFixViewModelTest {
         val vm = androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory
             .getInstance(app)
             .create(ClockFixViewModel::class.java)
+        store.put("default", vm)
         assertNotNull(vm.uiState.value)
     }
 }

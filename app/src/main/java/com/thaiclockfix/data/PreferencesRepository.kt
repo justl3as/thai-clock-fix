@@ -32,9 +32,29 @@ data class ClockFixPreferences(
         get() = LocaleMode.fromTag(lastAppliedLocaleTag)
 }
 
+interface ClockPreferencesStore {
+    val preferencesFlow: Flow<ClockFixPreferences>
+
+    suspend fun saveSelectedLocale(localeTag: String)
+
+    suspend fun saveApplySuccess(
+        appliedLocaleTag: String,
+        verifiedLocale: String,
+    )
+
+    suspend fun saveApplyFailure(
+        attemptedLocaleTag: String,
+        errorMessage: String,
+    )
+
+    suspend fun saveRestoreDefault(verifiedLocale: String)
+
+    suspend fun updateVerifiedSystemLocale(verifiedLocale: String?)
+}
+
 class PreferencesRepository(
     private val context: Context,
-) {
+) : ClockPreferencesStore {
     private object PreferencesKeys {
         val SELECTED_LOCALE = stringPreferencesKey("selected_locale")
         val LAST_APPLIED_LOCALE = stringPreferencesKey("last_applied_locale")
@@ -44,7 +64,7 @@ class PreferencesRepository(
         val LAST_ERROR_MESSAGE = stringPreferencesKey("last_error_message")
     }
 
-    val preferencesFlow: Flow<ClockFixPreferences> =
+    override val preferencesFlow: Flow<ClockFixPreferences> =
         context.clockDataStore.data
             .catch { exception ->
                 if (exception is IOException) {
@@ -63,13 +83,13 @@ class PreferencesRepository(
                 )
             }
 
-    suspend fun saveSelectedLocale(localeTag: String) {
+    override suspend fun saveSelectedLocale(localeTag: String) {
         context.clockDataStore.edit { preferences ->
             preferences[PreferencesKeys.SELECTED_LOCALE] = localeTag
         }
     }
 
-    suspend fun saveApplySuccess(
+    override suspend fun saveApplySuccess(
         appliedLocaleTag: String,
         verifiedLocale: String,
     ) {
@@ -83,7 +103,7 @@ class PreferencesRepository(
         }
     }
 
-    suspend fun saveApplyFailure(
+    override suspend fun saveApplyFailure(
         attemptedLocaleTag: String,
         errorMessage: String,
     ) {
@@ -95,7 +115,7 @@ class PreferencesRepository(
         }
     }
 
-    suspend fun saveRestoreDefault(verifiedLocale: String) {
+    override suspend fun saveRestoreDefault(verifiedLocale: String) {
         val now = System.currentTimeMillis()
         context.clockDataStore.edit { preferences ->
             preferences[PreferencesKeys.LAST_APPLIED_LOCALE] = ""
@@ -106,7 +126,7 @@ class PreferencesRepository(
         }
     }
 
-    suspend fun updateVerifiedSystemLocale(verifiedLocale: String?) {
+    override suspend fun updateVerifiedSystemLocale(verifiedLocale: String?) {
         context.clockDataStore.edit { preferences ->
             if (verifiedLocale != null) {
                 preferences[PreferencesKeys.LAST_VERIFIED_SYSTEM_LOCALE] = verifiedLocale
