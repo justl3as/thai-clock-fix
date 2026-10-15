@@ -16,16 +16,12 @@ jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      KEYSTORE_PATH: ${{ runner.temp }}/thai-clock-fix-release.jks
-      STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-      KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-      KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Set up JDK
         uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
@@ -37,7 +33,20 @@ jobs:
         uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
 
       - name: Install Android SDK 37
-        run: sdkmanager "platforms;android-37"
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -path '*/bin/sdkmanager' -print | sort -V | tail -n 1)"
+          if [[ -z "$SDKMANAGER" ]]; then
+            echo "::error::sdkmanager was not found under $SDK_ROOT/cmdline-tools"
+            exit 1
+          fi
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platforms;android-37.0"
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
 
       - name: Resolve release version
         shell: bash
@@ -63,7 +72,12 @@ jobs:
           echo "THAI_CLOCK_FIX_VERSION_NAME=$VERSION" >> "$GITHUB_ENV"
           echo "THAI_CLOCK_FIX_VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
 
-      - name: Prepare release signing key
+      - name: Validate release secrets
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         shell: bash
         run: |
           set -euo pipefail
@@ -73,10 +87,23 @@ jobs:
               exit 1
             fi
           done
+
+      - name: Prepare release signing key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          KEYSTORE_PATH="$RUNNER_TEMP/thai-clock-fix-release.p12"
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
           chmod 600 "$KEYSTORE_PATH"
+          echo "KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
 
       - name: Build signed release APK
+        env:
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: >-
           ./gradlew --no-daemon
           :app:spotlessCheck
@@ -114,4 +141,12 @@ jobs:
             gh release upload "$GITHUB_REF_NAME" "$RELEASE_APK" "$RELEASE_APK.sha256" --clobber
           else
             gh release create "$GITHUB_REF_NAME" "$RELEASE_APK" "$RELEASE_APK.sha256" --title "Thai Clock Fix $GITHUB_REF_NAME" --generate-notes
+          fi
+
+      - name: Remove temporary signing key
+        if: always()
+        shell: bash
+        run: |
+          if [[ -n "${KEYSTORE_PATH:-}" ]]; then
+            rm -f "$KEYSTORE_PATH"
           fi
