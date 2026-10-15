@@ -25,6 +25,12 @@
 
 Debug APK อยู่ที่ `app/build/outputs/apk/debug/app-debug.apk` ส่วน `assembleRelease` ที่ไม่มี signing environment จะสร้าง release artifact สำหรับตรวจ R8/resource shrinking เท่านั้น ไม่ควรนำ unsigned artifact ไปเผยแพร่
 
+JaCoCo coverage เป็นแบบ opt-in เพื่อไม่เพิ่ม overhead ให้ build ปกติ:
+
+```sh
+./gradlew -Pcoverage=true :app:createDebugUnitTestCoverageReport
+```
+
 แอปไม่มี Gemini, Firebase AI, API key หรือ runtime service ของ Google AI Studio
 
 ## Package identity
@@ -62,7 +68,7 @@ Release build รับค่าต่อไปนี้จาก environment �
 
 ## GitHub Release
 
-CI อยู่ใน `.github/workflows/ci.yml` และตรวจ formatting, unit tests, lint, debug build และ R8 release build ทุก push/PR
+CI อยู่ใน `.github/workflows/ci.yml` และตรวจ formatting, debug unit tests, release lint และ R8/resource-shrunk release build ทุก push/PR โดยไม่เปิด JaCoCo instrumentation ใน build ปกติ
 
 การ push tag รูปแบบ `vMAJOR.MINOR.PATCH` จะเรียก `.github/workflows/release.yml` เพื่อ build, sign, ตรวจลายเซ็น และแนบ APK พร้อม SHA-256 checksum เข้า GitHub Release
 

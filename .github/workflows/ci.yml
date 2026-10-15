@@ -53,7 +53,5 @@ jobs:
           ./gradlew --no-daemon
           :app:spotlessCheck
           :app:testDebugUnitTest
-          :app:lintDebug
           :app:lintRelease
-          :app:assembleDebug
           :app:assembleRelease
