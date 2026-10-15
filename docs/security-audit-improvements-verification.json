@@ -1,0 +1,19 @@
+{
+  "tests": {
+    "tests": 33,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "lint": {
+    "Error": 0,
+    "Fatal": 0,
+    "Warning": 43
+  },
+  "apk": "/Users/pongdanai/Project/thai-clock-fix/app/build/outputs/apk/debug/app-debug.apk",
+  "apk_sha256": "9771838548f53d05729438ea6523f615975ce66f66478a4e2d7e93be68fe6bb4",
+  "command": "./gradlew --offline --no-daemon --no-configuration-cache --max-workers=2 :app:testDebugUnitTest :app:assembleDebug :app:lintDebug",
+  "exit_code": 0,
+  "device_tests_run": false,
+  "dependency_verification_enabled": false
+}

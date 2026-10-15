@@ -1,0 +1,6 @@
+{
+  "name": "Thai Clock Fix",
+  "description": "ปรับรูปแบบวันที่และเวลา SystemUI เป็น 24 ชั่วโมง และปฏิทินไทย พ.ศ. ผ่าน Shizuku โดยไม่ต้อง Root",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

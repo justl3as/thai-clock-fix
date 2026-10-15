@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Thai Clock Fix</string>
+
+    <!-- Main screen -->
+    <string name="faq_icon_cd">คำถามที่พบบ่อย</string>
+    <string name="overflow_menu_cd">เมนูเพิ่มเติม</string>
+    <string name="menu_restore">คืนค่าเริ่มต้นระบบ (Restore)</string>
+    <string name="menu_adb_commands">คำสั่ง ADB</string>
+    <string name="menu_shizuku_connection">การเชื่อมต่อ Shizuku</string>
+    <string name="format_section_title">รูปแบบเวลาและวันที่</string>
+    <string name="error_snackbar_prefix">ข้อผิดพลาด: %1$s</string>
+
+    <!-- Hero clock -->
+    <string name="hero_clock_semantics">ตัวอย่างนาฬิกา %1$s %2$s</string>
+    <string name="hero_preview_badge">ตัวอย่างในแอป</string>
+
+    <!-- Locale modes -->
+    <string name="mode_thai_short">ไทย • พ.ศ.</string>
+    <string name="mode_english_short">อังกฤษ • ค.ศ.</string>
+    <string name="mode_thai_title">ไทย (พุทธศักราช พ.ศ.)</string>
+    <string name="mode_english_title">อังกฤษ (สหรัฐอเมริกา)</string>
+
+    <!-- Primary actions -->
+    <string name="action_install_shizuku">ติดตั้ง Shizuku</string>
+    <string name="action_start_shizuku">ดูวิธีเริ่ม Shizuku</string>
+    <string name="action_grant_permission">อนุญาต Shizuku</string>
+    <string name="action_apply">ใช้รูปแบบนี้</string>
+    <string name="action_checking">กำลังตรวจสอบ…</string>
+    <string name="action_applying">กำลังปรับใช้…</string>
+    <string name="action_already_applied">ใช้อยู่แล้ว</string>
+    <string name="action_retry">ลองอีกครั้ง</string>
+
+    <!-- Shizuku bottom sheet -->
+    <string name="sheet_close_cd">ปิด</string>
+    <string name="sheet_subtitle">ตั้งค่านาฬิกาของระบบผ่าน Shizuku</string>
+    <string name="checkpoint_install_app">ติดตั้งแอป</string>
+    <string name="checkpoint_shizuku_service">บริการ Shizuku</string>
+    <string name="checkpoint_permission">สิทธิ์อนุญาต</string>
+    <string name="btn_install_shizuku_play">ติดตั้ง Shizuku จาก Google Play</string>
+    <string name="btn_grant_now">อนุญาตสิทธิ์ทันที</string>
+    <string name="sheet_denied_hint">เปิดแอป Shizuku > \'แอปพลิเคชันที่ได้รับอนุญาต\' แล้วเปิดสวิตช์ให้ Thai Clock Fix</string>
+    <string name="btn_open_shizuku">เปิด Shizuku</string>
+    <string name="btn_retry_permission">ขอสิทธิ์ใหม่</string>
+    <string name="btn_open_shizuku_app">เปิดแอป Shizuku</string>
+    <string name="btn_refresh">รีเฟรช</string>
+    <string name="guide_wifi_title">วิธีเปิดใช้งานผ่าน Wi-Fi (ไม่ต้องใช้คอมพิวเตอร์)</string>
+    <string name="guide_step1_title">เปิด Developer Options</string>
+    <string name="guide_step1_desc">การตั้งค่า > เกี่ยวกับโทรศัพท์ > ข้อมูลซอฟต์แวร์ > แตะ \'หมายเลขรุ่น\' ซ้ำ ๆ 7 ครั้ง</string>
+    <string name="guide_step2_title">เปิด Wireless Debugging</string>
+    <string name="guide_step2_desc">เชื่อมต่อ Wi-Fi แล้วไปที่ Developer Options > เปิดสวิตช์ \'การแก้ไขข้อบกพร่องแบบไร้สาย\'</string>
+    <string name="guide_step3_title">จับคู่อุปกรณ์ (Pairing)</string>
+    <string name="guide_step3_desc">ในแอป Shizuku แตะ \'จับคู่\' แล้วนำรหัส 6 หลักจากหน้า Wireless Debugging มากดยืนยัน</string>
+    <string name="guide_step4_title">กดเริ่ม (Start) ใน Shizuku</string>
+    <string name="guide_step4_desc">กดปุ่ม \'Start\' ในแอป Shizuku เมื่อบริการเริ่มแล้ว สลับกลับมาที่นี่เพื่อกดใช้รูปแบบนาฬิกา</string>
+    <string name="btn_open_dev_options">เปิด Developer Options ในเครื่อง</string>
+    <string name="dev_options_open_failed">ไม่สามารถเปิด Developer Options</string>
+    <string name="btn_close">ปิด</string>
+
+    <!-- Restore dialog -->
+    <string name="restore_title">คืนค่านาฬิกาเป็นค่าเริ่มต้น?</string>
+    <string name="restore_body">ล้างภาษาที่กำหนดให้ SystemUI ของผู้ใช้หลัก (user 0) เพื่อกลับไปใช้ภาษาระบบ โดยไม่เปลี่ยนค่ารูปแบบเวลา 24 ชั่วโมง</string>
+    <string name="restore_scope_note">เปลี่ยนเฉพาะภาษา SystemUI ของผู้ใช้หลัก</string>
+    <string name="btn_confirm_restore">ยืนยันคืนค่า</string>
+    <string name="btn_cancel">ยกเลิก</string>
+
+    <!-- ADB commands dialog -->
+    <string name="adb_title">คำสั่ง ADB (Manual CLI)</string>
+    <string name="adb_intro">หากต้องการรันคำสั่งด้วยตนเองผ่านคอมพิวเตอร์หรือ Termux สามารถคัดลอกคำสั่งด้านล่างได้:</string>
+    <string name="adb_section_for_mode">คำสั่งสำหรับ %1$s:</string>
+    <string name="adb_section_restore">คำสั่งสำหรับคืนค่าเริ่มต้น (Restore):</string>
+    <string name="btn_copy_all">คัดลอกทั้งหมด</string>
+    <string name="copy_command_cd">คัดลอกคำสั่ง</string>
+    <string name="copied_toast">คัดลอกลงคลิปบอร์ดแล้ว</string>
+
+    <!-- FAQ dialog -->
+    <string name="faq_title">คำถามที่พบบ่อย &amp; ข้อแนะนำ</string>
+    <string name="faq_q1">นาฬิกายังไม่เปลี่ยนทันทีหลังกดตั้งค่า?</string>
+    <string name="faq_a1">ให้ล็อกหน้าจอแล้วปลดล็อก 1 ครั้ง หรือปัดแถบแจ้งเตือนลงมา เพื่อให้ระบบรีเฟรชการแสดงผลแถบสถานะ</string>
+    <string name="faq_q2">ทำไมนาฬิกาภาษาไทยบน Android ถึงมี \'น.\'?</string>
+    <string name="faq_a2">บางระบบใช้ \'น.\' ในรูปแบบเวลาภาษาไทย แอปนี้ตั้งภาษาของ SystemUI และเวลา 24 ชั่วโมงสำหรับผู้ใช้หลัก (user 0) การแสดงผลขึ้นอยู่กับรุ่นและระบบ อาจกระทบส่วนอื่นของ SystemUI และแอปที่ใช้รูปแบบเวลาระบบ ตัวอย่างในแอปไม่ใช่ภาพจากแถบสถานะ</string>
+    <string name="faq_q3">ปลอดภัยหรือไม่ และมีผลต่อประกันเครื่องหรือไม่?</string>
+    <string name="faq_a3">แอปไม่ต้อง Root และใช้คำสั่งตั้งค่าระบบผ่าน Shizuku การตั้งภาษารายแอปต้องใช้ Android 13 ขึ้นไป ความเข้ากันได้และเงื่อนไขประกันขึ้นอยู่กับผู้ผลิต</string>
+    <string name="faq_q4">หากรีสตาร์ตเครื่อง การตั้งค่าจะยังอยู่หรือไม่?</string>
+    <string name="faq_a4">บนอุปกรณ์บางรุ่น (เช่น Samsung One UI) ระบบอาจคืนค่าภาษาของ SystemUI กลับเป็นค่าเริ่มต้นหลังรีสตาร์ต หากนาฬิกากลับมามี \'น.\' สามารถเปิดแอปนี้เพื่อกดเปลี่ยนใหม่อีกครั้ง</string>
+    <string name="faq_q5">วิธีคืนค่ากลับเป็นนาฬิกาแบบเดิม</string>
+    <string name="faq_a5">แตะปุ่มเมนู (⋮) ที่มุมขวาบน > เลือก \'คืนค่าเริ่มต้นระบบ (Restore)\' แล้วกดยืนยัน เพื่อล้างภาษาที่กำหนดให้ SystemUI ของผู้ใช้หลัก (user 0) โดยไม่คืนค่ารูปแบบเวลา 24 ชั่วโมง การแสดงผลอาจไม่เปลี่ยนทันที</string>
+    <string name="faq_tips_title">ข้อแนะนำการใช้งาน</string>
+    <string name="faq_tips_body">แนะนำให้คงแอปและ Shizuku ไว้ในเครื่อง เพื่อความสะดวกในการตั้งค่าใหม่เมื่อมีการรีสตาร์ตเครื่อง หรือหลังจากอัปเดตระบบปฏิบัติการ</string>
+    <string name="btn_got_it">เข้าใจแล้ว</string>
+
+    <!-- ViewModel notices -->
+    <string name="vm_shizuku_not_ready">Shizuku ยังไม่พร้อม กรุณาเชื่อมต่อ Shizuku ก่อนนำไปใช้</string>
+    <string name="vm_restore_success">คืนค่า SystemUI ให้ใช้ภาษาระบบเริ่มต้นสำเร็จแล้ว</string>
+    <string name="vm_apply_success">ยืนยันค่าภาษา SystemUI และเวลา 24 ชั่วโมงแล้ว โปรดตรวจดูนาฬิกาบนเครื่อง</string>
+    <string name="vm_verify_failed">ไม่สามารถยืนยันการตั้งค่า SystemUI</string>
+    <string name="vm_error_generic">เกิดข้อผิดพลาดในการตั้งค่า SystemUI</string>
+</resources>

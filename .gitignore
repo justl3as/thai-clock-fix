@@ -1,0 +1,83 @@
+# Built application files
+*.apk
+*.aar
+*.ap_
+*.aab
+*.dex
+
+# Java / JVM
+*.class
+*.log
+
+# Gradle files
+.gradle/
+build/
+/*/build/
+app/build/
+
+# Kotlin
+.kotlin/
+.kotlin-daemon/
+
+# Local configuration file (SDK path, NDK path, etc.)
+local.properties
+/local.properties
+
+# Android Studio / IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+.externalNativeBuild/
+.cxx/
+captures/
+/captures/
+
+# VS Code
+.vscode/
+
+# Environment variables & Signing Secrets
+.env
+.env.*.local
+*.key
+*.keystore
+*.jks
+debug.keystore
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# AI Agents & Coding Assistants
+.agents/
+.claude/
+.claude.json
+.cursor/
+.windsurf/
+.cline/
+.roo/
+.aider*
+.continue/
+.superpowers/
+docs/superpowers/
+skills-lock.json
+
+# Temporary and backup files
+*~
+*.swp
+*.bak
+*.tmp
+
+# Local tool state
+.video_agent/
+.codegraph/
