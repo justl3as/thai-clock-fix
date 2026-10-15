@@ -1,105 +1,168 @@
-# Thai Clock Fix
+<h1 align="center">Thai Clock Fix</h1>
 
-แอป Android สำหรับตั้ง locale ของ SystemUI และรูปแบบเวลา 24 ชั่วโมงผ่าน Shizuku โดยมีโหมดภาษาไทย พ.ศ. และภาษาอังกฤษ ค.ศ. แอปทำงานกับ **ผู้ใช้หลักของ Android (user 0)** และไม่ต้อง Root
+<p align="center">
+  ตั้งค่า locale ของ Android SystemUI และเวลา 24 ชั่วโมงผ่าน Shizuku โดยไม่ต้อง Root
+</p>
 
-## Requirements
+<p align="center">
+  <a href="https://github.com/justl3as/thai-clock-fix/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/justl3as/thai-clock-fix/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/justl3as/thai-clock-fix/actions/workflows/codeql.yml"><img alt="CodeQL" src="https://github.com/justl3as/thai-clock-fix/actions/workflows/codeql.yml/badge.svg"></a>
+  <a href="https://github.com/justl3as/thai-clock-fix/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/justl3as/thai-clock-fix?display_name=tag&sort=semver"></a>
+</p>
 
-- Android 13 ขึ้นไปที่รองรับ `cmd locale`
-- Shizuku v11 ขึ้นไป (โปรเจกต์ใช้ Shizuku 13.1.5)
-- Android SDK 37 สำหรับ build
-- JDK 17 ขึ้นไป
+<p align="center">
+  <a href="https://github.com/justl3as/thai-clock-fix/releases/latest"><strong>ดาวน์โหลดรุ่นล่าสุด</strong></a>
+  ·
+  <a href="PRODUCT.md">Product spec</a>
+  ·
+  <a href="SECURITY.md">Security policy</a>
+</p>
 
-อุปกรณ์/OEM บางรุ่นอาจไม่อนุญาตให้เปลี่ยน locale ของ SystemUI หรืออาจคืนค่าหลัง reboot/update ระบบ
+Thai Clock Fix เป็นแอป Android สำหรับผู้ใช้ที่ต้องการควบคุมรูปแบบเวลาและวันที่ของ SystemUI โดยเฉพาะกรณีที่รูปแบบภาษาไทยบน status bar แสดง `น.` ต่อท้ายเวลา แอปใช้ Shizuku เพื่อเรียกคำสั่งระบบสำหรับผู้ใช้หลักของเครื่อง (`user 0`) และอ่านค่ากลับก่อนแจ้งว่าสำเร็จ
 
-## Build และตรวจสอบ
+> [!NOTE]
+> แอปไม่ได้แก้ข้อความ ฟอนต์ หรือ resource ภายใน SystemUI โดยตรง การแสดงผลสุดท้ายยังขึ้นอยู่กับ Android และ OEM ของอุปกรณ์
+
+## ทำอะไรได้บ้าง
+
+- ตั้งเวลา Android เป็นรูปแบบ 24 ชั่วโมง
+- ตั้ง locale ของ `com.android.systemui` เป็นไทย พ.ศ. หรืออังกฤษสหรัฐฯ
+- อ่าน locale และค่า 12/24 ชั่วโมงกลับจากระบบก่อนยืนยันผล
+- คืนค่า locale override ของ SystemUI กลับไปใช้ภาษาระบบ
+- แสดงคำสั่ง ADB สำหรับผู้ใช้ที่ต้องการทำงานแบบ manual
+- แนะนำขั้นตอนติดตั้ง เริ่ม และอนุญาต Shizuku จากในแอป
+
+## เริ่มใช้งาน
+
+> [!IMPORTANT]
+> การใช้งานจริงต้องใช้ Android 13 ขึ้นไป เนื่องจากแอปอาศัยคำสั่ง per-app locale ของ Android แม้ package จะกำหนด `minSdk = 26` ก็ตาม
+
+1. ติดตั้งและเริ่ม [Shizuku](https://shizuku.rikka.app/)
+2. ดาวน์โหลด APK จาก [Latest Release](https://github.com/justl3as/thai-clock-fix/releases/latest)
+3. เปิด Thai Clock Fix แล้วอนุญาตสิทธิ์ Shizuku
+4. เลือกรูปแบบที่ต้องการ
+5. แตะ **ใช้รูปแบบนี้**
+6. ตรวจนาฬิกาบนเครื่อง หาก status bar ยังไม่รีเฟรช ให้ล็อกและปลดล็อกหน้าจอหนึ่งครั้ง
+
+แอปทำงานกับ Android owner user (`user 0`) เท่านั้น อุปกรณ์บางรุ่นอาจคืนค่า SystemUI locale หลัง reboot หรือ system update
+
+## รูปแบบที่รองรับ
+
+| โหมด | Locale | ผลที่ตั้ง |
+| --- | --- | --- |
+| ไทย • พ.ศ. | `th-TH-u-ca-buddhist` | SystemUI ใช้ locale ไทยพร้อม Buddhist calendar และเวลา 24 ชั่วโมง |
+| อังกฤษ • ค.ศ. | `en-US` | SystemUI ใช้ locale อังกฤษสหรัฐฯ และเวลา 24 ชั่วโมง |
+| Restore | system default | ล้าง locale override ของ SystemUI โดยไม่เปลี่ยนค่า 12/24 ชั่วโมง |
+
+## วิธีทำงาน
+
+```mermaid
+flowchart LR
+    A[Thai Clock Fix] --> B[Shizuku]
+    B --> C[Set 24-hour time]
+    B --> D[Set SystemUI app locale]
+    C --> E[Read back settings]
+    D --> E
+    E --> F{Locale and 24h match?}
+    F -->|Yes| G[Show verified success]
+    F -->|No| H[Show failure and clear verified state]
+```
+
+การเปลี่ยนค่าและการ readback ใช้คิวเดียวกัน เพื่อไม่ให้ผลอ่านเก่ามาทับผลจากคำสั่งที่เพิ่งทำเสร็จ
+
+<details>
+<summary>คำสั่งระบบหลักที่แอปใช้</summary>
+
+```sh
+LOCALE_TAG="en-US" # หรือ th-TH-u-ca-buddhist
+settings --user 0 put system time_12_24 24
+cmd locale set-app-locales com.android.systemui --user 0 --locales "$LOCALE_TAG"
+cmd locale get-app-locales com.android.systemui --user 0
+settings --user 0 get system time_12_24
+```
+
+Restore ใช้ locale ว่างเพื่อล้าง per-app override ของ SystemUI
+
+```sh
+cmd locale set-app-locales com.android.systemui --user 0 --locales ""
+```
+
+</details>
+
+## ข้อจำกัดที่ควรรู้
+
+> [!WARNING]
+> การเปลี่ยน locale ของ SystemUI อาจกระทบข้อความหรือรูปแบบวันที่ส่วนอื่นของ SystemUI ไม่ใช่เฉพาะนาฬิกาบน status bar
+
+- Restore คืนเฉพาะ SystemUI locale override และไม่คืนค่ารูปแบบ 12/24 ชั่วโมงเดิม
+- แอปไม่ restart SystemUI และไม่ reboot เครื่องให้อัตโนมัติ
+- ตัวอย่างเวลาในแอปเป็น preview ไม่ใช่ภาพหรือการตรวจจับ status bar จริง
+- OEM บางรายอาจไม่ยอมรับคำสั่งเดียวกัน หรืออาจคืนค่าหลัง reboot/update
+- Shizuku ต้องพร้อมและได้รับ permission ก่อนใช้คำสั่งระบบ
+
+รายละเอียดขอบเขตและพฤติกรรมที่ถือว่าเป็น product contract อยู่ใน [PRODUCT.md](PRODUCT.md)
+
+## ดาวน์โหลดและตรวจสอบ APK
+
+ทุก GitHub Release มี APK และไฟล์ `.sha256` คู่กัน
+
+```sh
+# Linux
+sha256sum -c *.apk.sha256
+
+# macOS
+shasum -a 256 -c *.apk.sha256
+```
+
+Release APK ต้องใช้ production signing identity เดิมทุกเวอร์ชัน ดู certificate fingerprint, threat model และ release integrity policy ได้ใน [SECURITY.md](SECURITY.md)
+
+## Build from source
+
+ต้องมี:
+
+- JDK 17
+- Android SDK 37
+- Android platform package `platforms;android-37.0`
+
+ชุดตรวจเดียวกับ CI:
 
 ```sh
 ./gradlew --no-daemon \
   :app:spotlessCheck \
   :app:testDebugUnitTest \
-  :app:lintDebug \
   :app:lintRelease \
-  :app:assembleDebug \
   :app:assembleRelease
 ```
 
-Debug APK อยู่ที่ `app/build/outputs/apk/debug/app-debug.apk` ส่วน `assembleRelease` ที่ไม่มี signing environment จะสร้าง release artifact สำหรับตรวจ R8/resource shrinking เท่านั้น ไม่ควรนำ unsigned artifact ไปเผยแพร่
+สร้าง debug APK:
 
-JaCoCo coverage เป็นแบบ opt-in เพื่อไม่เพิ่ม overhead ให้ build ปกติ:
+```sh
+./gradlew :app:assembleDebug
+```
+
+JaCoCo coverage เป็น opt-in เพื่อไม่เพิ่ม overhead ให้ build ปกติ:
 
 ```sh
 ./gradlew -Pcoverage=true :app:createDebugUnitTestCoverageReport
 ```
 
-แอปไม่มี Gemini, Firebase AI, API key หรือ runtime service ของ Google AI Studio
+Application ID และ namespace ของ production build คือ `com.thaiclockfix`
 
-## Package identity
+## Quality and release pipeline
 
-Production application ID และ namespace คือ:
+Pull request และ push เข้า `main` ต้องผ่าน `verify` ซึ่งตรวจ formatting, unit tests, Android release lint และ R8/resource-shrunk release build
 
-```text
-com.thaiclockfix
-```
+CodeQL ตรวจ GitHub Actions และ Java/Kotlin แยกจาก CI ปกติ โดย Java/Kotlin ใช้ manual compile ที่ปิด Gradle build cache สำหรับงานวิเคราะห์ เพื่อให้ CodeQL เห็น source compilation ทุกครั้ง
 
-รุ่นต้นแบบจาก AI Studio เคยใช้ `com.aistudio.thaiclockfix.pzkymq` ซึ่งเป็นคนละ package ดังนั้น APK production รุ่นแรกจะไม่อัปเดตทับรุ่นต้นแบบเดิมโดยอัตโนมัติ ให้ทดสอบรุ่นใหม่ให้เรียบร้อยก่อนถอนการติดตั้ง package เก่า
+Tag รูปแบบ `vMAJOR.MINOR.PATCH` จะเรียก release workflow เพื่อ:
 
-## ใช้งาน
+1. แปลง semantic version เป็น Android `versionCode`
+2. build และ sign release APK ด้วย production key จาก GitHub Actions Secrets
+3. ตรวจลายเซ็นด้วย `apksigner`
+4. สร้าง SHA-256 checksum
+5. แนบ APK และ checksum เข้า GitHub Release
 
-1. ติดตั้งและเริ่ม Shizuku
-2. เปิด Thai Clock Fix และอนุญาตสิทธิ์ใน Shizuku
-3. เลือกรูปแบบภาษา แล้วกด **ใช้รูปแบบนี้**
-4. แอปจะตั้งเวลา 24 ชั่วโมงและ locale ของ SystemUI จากนั้นอ่านค่ากลับก่อนแจ้งสำเร็จ
-5. เมื่อต้องการคืนค่า ให้เลือก **Restore** เพื่อล้าง locale override ของ SystemUI
+## Project docs
 
-Restore ไม่คืนค่ารูปแบบ 12/24 ชั่วโมงเดิม และไม่มีการ restart SystemUI หรือ reboot อัตโนมัติ
-
-## Release signing
-
-Release build รับค่าต่อไปนี้จาก environment เท่านั้น:
-
-- `KEYSTORE_PATH`
-- `STORE_PASSWORD`
-- `KEY_ALIAS`
-- `KEY_PASSWORD`
-- `THAI_CLOCK_FIX_VERSION_NAME` (optional สำหรับ local build)
-- `THAI_CLOCK_FIX_VERSION_CODE` (optional สำหรับ local build)
-
-ถ้ากำหนด signing variable มาไม่ครบ Gradle จะหยุด build แทนการสร้าง APK ด้วย configuration ที่คลุมเครือ ห้าม commit keystore หรือรหัสผ่านลง repository
-
-## GitHub Release
-
-CI อยู่ใน `.github/workflows/ci.yml` และตรวจ formatting, debug unit tests, release lint และ R8/resource-shrunk release build ทุก push/PR โดยไม่เปิด JaCoCo instrumentation ใน build ปกติ
-
-การ push tag รูปแบบ `vMAJOR.MINOR.PATCH` จะเรียก `.github/workflows/release.yml` เพื่อ build, sign, ตรวจลายเซ็น และแนบ APK พร้อม SHA-256 checksum เข้า GitHub Release
-
-ตั้ง GitHub Actions Secrets ก่อน release:
-
-- `ANDROID_KEYSTORE_BASE64` — keystore ที่ encode เป็น Base64
-- `ANDROID_KEYSTORE_PASSWORD`
-- `ANDROID_KEY_ALIAS`
-- `ANDROID_KEY_PASSWORD`
-
-ตัวอย่าง release:
-
-```sh
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-workflow แปลง semantic version เป็น Android `versionCode` แบบ `MAJOR * 1,000,000 + MINOR * 1,000 + PATCH` เพื่อให้การอัปเดต APK จาก GitHub มี versionCode เพิ่มตามเวอร์ชัน
-
-## Play Protect และ sideload
-
-APK ที่แจกผ่าน GitHub ต้องใช้ release key เดิมทุกเวอร์ชันและควรติดตั้งทดสอบบนอุปกรณ์จริงก่อนเผยแพร่ Google Play Protect อาจสแกนแอปที่มาจากนอก Play Store และผล reputation/scanning เป็นสิ่งที่แอปหรือ build script รับประกันล่วงหน้าไม่ได้ ดังนั้น release gate ของโปรเจกต์คือ: signature ถูกต้อง, lint/tests ผ่าน, ติดตั้งบนเครื่องจริงได้ และไม่มีการแจ้งเตือน/บล็อกที่พบระหว่างการทดสอบเครื่องจริง
-
-## Build integrity
-
-Gradle Wrapper pin ที่ 9.3.1 พร้อม `distributionSha256Sum` ใน wrapper configuration ส่วน GitHub Actions ใช้ `gradle/actions/setup-gradle` ซึ่งตรวจ Gradle Wrapper ให้ด้วย
-
-ยังไม่ได้เปิด Gradle dependency verification สำหรับ Maven artifacts ทั้ง dependency graph; ก่อนเพิ่ม metadata ควรสร้างจาก dependency provenance ที่เชื่อถือได้ ไม่ควรรับ checksum จาก cache ที่ยังไม่ตรวจสอบ
-
-## Known technical debt
-
-การรัน shell ผ่าน Shizuku 13.1.5 ยังใช้ `Shizuku.newProcess` ผ่าน reflection ซึ่ง Shizuku ประกาศ deprecated และเตรียมถอดใน API รุ่นถัดไป ควรวาง migration ไป UserService ก่อนอัปเกรด Shizuku major version
-
-Apply, restore และ readback ใช้คิวเดียวกัน มี timeout 10 วินาทีและจำกัด stdout/stderr อย่างละ 64 KiB แต่ synchronous Binder IPC บางช่วงไม่สามารถรับประกันว่าจะถูกตัดด้วย coroutine timeout ได้ และถ้าคำสั่งหนึ่งสำเร็จแต่คำสั่งถัดไปล้มเหลว ระบบอาจอยู่ในสถานะเปลี่ยนบางส่วนจนกว่าจะ readback/restore ใหม่
+- [PRODUCT.md](PRODUCT.md) กำหนด product scope, user journey, success criteria, non-goals และข้อจำกัดทางเทคนิค
+- [SECURITY.md](SECURITY.md) อธิบาย security model, vulnerability reporting, APK signing และ supply-chain controls
