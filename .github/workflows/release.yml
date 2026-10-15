@@ -111,7 +111,7 @@ jobs:
           :app:lintRelease
           :app:assembleRelease
 
-      - name: Verify APK signature
+      - name: Verify APK signature and release identity
         shell: bash
         run: |
           set -euo pipefail
@@ -120,7 +120,14 @@ jobs:
             echo "::error::apksigner was not found in Android SDK build-tools"
             exit 1
           fi
-          "$APKSIGNER" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk
+          EXPECTED_CERT_SHA256="$(
+            tr -d '[:space:]:' < .github/release-signing-cert.sha256 |
+              tr '[:upper:]' '[:lower:]'
+          )"
+          scripts/verify-release-certificate.sh \
+            app/build/outputs/apk/release/app-release.apk \
+            "$APKSIGNER" \
+            "$EXPECTED_CERT_SHA256"
 
       - name: Prepare release files
         shell: bash

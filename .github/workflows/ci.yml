@@ -48,6 +48,9 @@ jobs:
           echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
           echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
 
+      - name: Test release certificate verifier
+        run: scripts/verify-release-certificate-test.sh
+
       - name: Verify project
         run: >-
           ./gradlew --no-daemon

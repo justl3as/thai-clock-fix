@@ -73,7 +73,10 @@ Each release must include:
 
 - a production-signed APK
 - an APK SHA-256 checksum file
-- a successful `apksigner verify --verbose --print-certs` step in the release workflow
+- a successful APK signature verification
+- a signing certificate SHA-256 match against the repository policy before any release asset is published
+
+The enforced certificate policy is stored in `.github/release-signing-cert.sha256`. The release workflow stops before publishing if the APK is unsigned, invalidly signed, signed by more than one certificate, or signed by a certificate whose SHA-256 digest does not match that policy.
 
 Production signing certificate SHA-256:
 
