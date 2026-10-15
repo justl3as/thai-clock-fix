@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.thaiclockfix.R
+import com.thaiclockfix.data.ClockPreferencesStore
 import com.thaiclockfix.data.PreferencesRepository
 import com.thaiclockfix.model.LocaleMode
 import com.thaiclockfix.service.ShizukuSystemUiLocaleService
@@ -38,7 +39,7 @@ data class ClockFixUiState(
 
 class ClockFixViewModel(
     application: Application,
-    private val preferencesRepository: PreferencesRepository,
+    private val preferencesRepository: ClockPreferencesStore,
     val shizukuManager: ShizukuManager,
     private val localeService: SystemUiLocaleService,
 ) : AndroidViewModel(application) {
