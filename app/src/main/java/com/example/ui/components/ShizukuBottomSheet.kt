@@ -77,7 +77,7 @@ fun ShizukuBottomSheet(
     onRequestPermission: () -> Unit,
     onRefreshStatus: () -> Unit,
     onDismiss: () -> Unit,
-    sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
     val context = LocalContext.current
     val devOptionsError = stringResource(R.string.dev_options_open_failed)
@@ -93,36 +93,36 @@ fun ShizukuBottomSheet(
         sheetState = sheetState,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        modifier = Modifier.testTag("shizuku_bottom_sheet")
+        modifier = Modifier.testTag("shizuku_bottom_sheet"),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             // Header: Title & Close Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Surface(
                         shape = CircleShape,
                         color = if (isReady) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                        modifier = Modifier.size(40.dp)
+                        modifier = Modifier.size(40.dp),
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = if (isReady) Icons.Default.Security else Icons.Default.PowerSettingsNew,
                                 contentDescription = null,
                                 tint = if (isReady) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(20.dp),
                             )
                         }
                     }
@@ -131,12 +131,12 @@ fun ShizukuBottomSheet(
                         Text(
                             text = stringResource(R.string.menu_shizuku_connection),
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
                         )
                         Text(
                             text = stringResource(R.string.sheet_subtitle),
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -150,14 +150,14 @@ fun ShizukuBottomSheet(
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 14.dp, vertical = 10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     StatusCheckpointItem(title = stringResource(R.string.checkpoint_install_app), isOk = isInstalled)
                     StatusCheckpointItem(title = stringResource(R.string.checkpoint_shizuku_service), isOk = isRunning)
@@ -170,7 +170,7 @@ fun ShizukuBottomSheet(
                 ShizukuStatus.NOT_INSTALLED -> {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         Button(
                             onClick = {
@@ -180,7 +180,7 @@ fun ShizukuBottomSheet(
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(48.dp)
+                                .height(48.dp),
                         ) {
                             ButtonContent(icon = Icons.Default.Download, label = stringResource(R.string.btn_install_shizuku_play))
                         }
@@ -190,7 +190,7 @@ fun ShizukuBottomSheet(
                 ShizukuStatus.PERMISSION_REQUIRED -> {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         Button(
                             onClick = {
@@ -200,7 +200,7 @@ fun ShizukuBottomSheet(
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(48.dp)
+                                .height(48.dp),
                         ) {
                             ButtonContent(icon = Icons.Default.Key, label = stringResource(R.string.btn_grant_now))
                         }
@@ -210,18 +210,18 @@ fun ShizukuBottomSheet(
                 ShizukuStatus.DENIED -> {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         Text(
                             text = stringResource(R.string.sheet_denied_hint),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            lineHeight = 18.sp
+                            lineHeight = 18.sp,
                         )
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Button(
                                 onClick = {
@@ -231,7 +231,7 @@ fun ShizukuBottomSheet(
                                 shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(48.dp)
+                                    .height(48.dp),
                             ) {
                                 ButtonContent(icon = Icons.AutoMirrored.Filled.Launch, label = stringResource(R.string.btn_open_shizuku))
                             }
@@ -239,7 +239,7 @@ fun ShizukuBottomSheet(
                             OutlinedButton(
                                 onClick = onRequestPermission,
                                 shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.height(48.dp)
+                                modifier = Modifier.height(48.dp),
                             ) {
                                 Text(stringResource(R.string.btn_retry_permission))
                             }
@@ -250,11 +250,11 @@ fun ShizukuBottomSheet(
                 ShizukuStatus.READY -> {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             FilledTonalButton(
                                 onClick = {
@@ -262,14 +262,14 @@ fun ShizukuBottomSheet(
                                     onDismiss()
                                 },
                                 shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
                             ) {
                                 ButtonContent(icon = Icons.AutoMirrored.Filled.Launch, label = stringResource(R.string.btn_open_shizuku_app), iconSize = 16.dp)
                             }
 
                             OutlinedButton(
                                 onClick = onRefreshStatus,
-                                shape = RoundedCornerShape(12.dp)
+                                shape = RoundedCornerShape(12.dp),
                             ) {
                                 ButtonContent(icon = Icons.Default.Refresh, label = stringResource(R.string.btn_refresh), iconSize = 16.dp)
                             }
@@ -280,11 +280,11 @@ fun ShizukuBottomSheet(
                 else -> { // SERVICE_STOPPED or UNKNOWN
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Button(
                                 onClick = {
@@ -294,7 +294,7 @@ fun ShizukuBottomSheet(
                                 shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(48.dp)
+                                    .height(48.dp),
                             ) {
                                 ButtonContent(icon = Icons.AutoMirrored.Filled.Launch, label = stringResource(R.string.btn_open_shizuku))
                             }
@@ -302,7 +302,7 @@ fun ShizukuBottomSheet(
                             OutlinedButton(
                                 onClick = onRefreshStatus,
                                 shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.height(48.dp)
+                                modifier = Modifier.height(48.dp),
                             ) {
                                 ButtonContent(icon = Icons.Default.Refresh, label = stringResource(R.string.btn_refresh), iconSize = 16.dp)
                             }
@@ -316,7 +316,7 @@ fun ShizukuBottomSheet(
                 Surface(
                     shape = RoundedCornerShape(14.dp),
                     color = MaterialTheme.colorScheme.surfaceContainer,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Row(
@@ -325,61 +325,61 @@ fun ShizukuBottomSheet(
                                 .clickable { isGuideExpanded = !isGuideExpanded }
                                 .padding(horizontal = 14.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.HelpOutline,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(18.dp),
                                 )
                                 Text(
                                     text = stringResource(R.string.guide_wifi_title),
                                     style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.SemiBold
+                                    fontWeight = FontWeight.SemiBold,
                                 )
                             }
                             Icon(
                                 imageVector = if (isGuideExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
 
                         AnimatedVisibility(
                             visible = isGuideExpanded,
                             enter = expandVertically() + fadeIn(),
-                            exit = shrinkVertically() + fadeOut()
+                            exit = shrinkVertically() + fadeOut(),
                         ) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 14.dp, vertical = 6.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 EmbeddedGuideStep(
                                     step = "1",
                                     title = stringResource(R.string.guide_step1_title),
-                                    desc = stringResource(R.string.guide_step1_desc)
+                                    desc = stringResource(R.string.guide_step1_desc),
                                 )
                                 EmbeddedGuideStep(
                                     step = "2",
                                     title = stringResource(R.string.guide_step2_title),
-                                    desc = stringResource(R.string.guide_step2_desc)
+                                    desc = stringResource(R.string.guide_step2_desc),
                                 )
                                 EmbeddedGuideStep(
                                     step = "3",
                                     title = stringResource(R.string.guide_step3_title),
-                                    desc = stringResource(R.string.guide_step3_desc)
+                                    desc = stringResource(R.string.guide_step3_desc),
                                 )
                                 EmbeddedGuideStep(
                                     step = "4",
                                     title = stringResource(R.string.guide_step4_title),
-                                    desc = stringResource(R.string.guide_step4_desc)
+                                    desc = stringResource(R.string.guide_step4_desc),
                                 )
 
                                 Spacer(modifier = Modifier.height(4.dp))
@@ -397,7 +397,7 @@ fun ShizukuBottomSheet(
                                     shape = RoundedCornerShape(12.dp),
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(48.dp)
+                                        .height(48.dp),
                                 ) {
                                     ButtonContent(icon = Icons.Default.Settings, label = stringResource(R.string.btn_open_dev_options), iconSize = 16.dp)
                                 }
@@ -417,23 +417,23 @@ fun ShizukuBottomSheet(
 @Composable
 private fun StatusCheckpointItem(
     title: String,
-    isOk: Boolean
+    isOk: Boolean,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Surface(
             shape = CircleShape,
             color = if (isOk) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(16.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     imageVector = if (isOk) Icons.Default.Check else Icons.Default.Close,
                     contentDescription = null,
                     tint = if (isOk) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(10.dp)
+                    modifier = Modifier.size(10.dp),
                 )
             }
         }
@@ -441,7 +441,7 @@ private fun StatusCheckpointItem(
             text = title,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = if (isOk) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (isOk) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+            color = if (isOk) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -450,17 +450,17 @@ private fun StatusCheckpointItem(
 private fun EmbeddedGuideStep(
     step: String,
     title: String,
-    desc: String
+    desc: String,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.Top
+        verticalAlignment = Alignment.Top,
     ) {
         Surface(
             shape = CircleShape,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(20.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Text(
@@ -468,7 +468,7 @@ private fun EmbeddedGuideStep(
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimary,
-                    fontSize = 11.sp
+                    fontSize = 11.sp,
                 )
             }
         }
@@ -478,13 +478,13 @@ private fun EmbeddedGuideStep(
                 text = title,
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
                 text = desc,
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                lineHeight = 16.sp
+                lineHeight = 16.sp,
             )
         }
     }

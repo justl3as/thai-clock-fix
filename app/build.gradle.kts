@@ -1,6 +1,7 @@
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
+  alias(libs.plugins.spotless)
 }
 
 android {
@@ -97,5 +98,19 @@ dependencies {
   debugImplementation(libs.androidx.compose.ui.tooling)
 }
 
-
-
+spotless {
+  kotlin {
+    target("src/main/**/*.kt", "src/test/**/*.kt", "src/androidTest/**/*.kt")
+    ktlint("1.8.0").editorConfigOverride(
+      mapOf(
+        // Compose convention: @Composable functions are PascalCase by design.
+        "ktlint_function_naming_ignore_when_annotated_with" to "Composable",
+        // Test files deliberately use kotlinx.coroutines.* style wildcard imports.
+        "ktlint_standard_no-wildcard-imports" to "disabled"
+      )
+    )
+  }
+  kotlinGradle {
+    target("*.gradle.kts")
+  }
+}

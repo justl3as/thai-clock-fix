@@ -1,15 +1,15 @@
 package com.example.ui.components
 
-import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
-import com.example.model.PrimaryAction
 import com.example.model.LocaleMode
+import com.example.model.PrimaryAction
 import com.example.shizuku.ShizukuStatus
 import com.example.ui.theme.ThaiClockFixTheme
 import org.junit.Rule
@@ -86,7 +86,11 @@ class HeroClockTest {
         compose.onNodeWithText("น.").assertDoesNotExist()
     }
 
-    private fun connectionAction(status: ShizukuStatus, locale: String? = null, checking: Boolean = false): PrimaryAction {
+    private fun connectionAction(
+        status: ShizukuStatus,
+        locale: String? = null,
+        checking: Boolean = false,
+    ): PrimaryAction {
         val action = PrimaryAction.resolve(status, LocaleMode.ENGLISH, locale, false, false, true, checking)
         compose.setContent {
             ThaiClockFixTheme(dynamicColor = false) {
@@ -102,7 +106,11 @@ class HeroClockTest {
 
     @Test fun readyConnectionOffersApplyAndDoesNotClaimApplied() {
         connectionAction(ShizukuStatus.READY)
-        compose.onNodeWithTag("primary_action_button").assertIsEnabled().assertHeightIsAtLeast(48.dp).performClick()
+        compose
+            .onNodeWithTag("primary_action_button")
+            .assertIsEnabled()
+            .assertHeightIsAtLeast(48.dp)
+            .performClick()
         org.junit.Assert.assertEquals(PrimaryAction.Apply, clickedAction)
     }
 

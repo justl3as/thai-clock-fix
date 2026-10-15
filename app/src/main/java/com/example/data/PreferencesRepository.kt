@@ -23,7 +23,7 @@ data class ClockFixPreferences(
     val lastApplySuccess: Boolean = false,
     val lastApplyTimestamp: Long = 0L,
     val lastVerifiedSystemLocale: String? = null,
-    val lastErrorMessage: String? = null
+    val lastErrorMessage: String? = null,
 ) {
     val selectedMode: LocaleMode
         get() = LocaleMode.fromTag(selectedLocaleTag) ?: LocaleMode.DEFAULT
@@ -32,8 +32,9 @@ data class ClockFixPreferences(
         get() = LocaleMode.fromTag(lastAppliedLocaleTag)
 }
 
-class PreferencesRepository(private val context: Context) {
-
+class PreferencesRepository(
+    private val context: Context,
+) {
     private object PreferencesKeys {
         val SELECTED_LOCALE = stringPreferencesKey("selected_locale")
         val LAST_APPLIED_LOCALE = stringPreferencesKey("last_applied_locale")
@@ -43,24 +44,24 @@ class PreferencesRepository(private val context: Context) {
         val LAST_ERROR_MESSAGE = stringPreferencesKey("last_error_message")
     }
 
-    val preferencesFlow: Flow<ClockFixPreferences> = context.clockDataStore.data
-        .catch { exception ->
-            if (exception is IOException) {
-                emit(emptyPreferences())
-            } else {
-                throw exception
+    val preferencesFlow: Flow<ClockFixPreferences> =
+        context.clockDataStore.data
+            .catch { exception ->
+                if (exception is IOException) {
+                    emit(emptyPreferences())
+                } else {
+                    throw exception
+                }
+            }.map { preferences ->
+                ClockFixPreferences(
+                    selectedLocaleTag = preferences[PreferencesKeys.SELECTED_LOCALE] ?: LocaleMode.DEFAULT.tag,
+                    lastAppliedLocaleTag = preferences[PreferencesKeys.LAST_APPLIED_LOCALE],
+                    lastApplySuccess = preferences[PreferencesKeys.LAST_APPLY_SUCCESS] ?: false,
+                    lastApplyTimestamp = preferences[PreferencesKeys.LAST_APPLY_TIMESTAMP] ?: 0L,
+                    lastVerifiedSystemLocale = preferences[PreferencesKeys.LAST_VERIFIED_SYSTEM_LOCALE],
+                    lastErrorMessage = preferences[PreferencesKeys.LAST_ERROR_MESSAGE],
+                )
             }
-        }
-        .map { preferences ->
-            ClockFixPreferences(
-                selectedLocaleTag = preferences[PreferencesKeys.SELECTED_LOCALE] ?: LocaleMode.DEFAULT.tag,
-                lastAppliedLocaleTag = preferences[PreferencesKeys.LAST_APPLIED_LOCALE],
-                lastApplySuccess = preferences[PreferencesKeys.LAST_APPLY_SUCCESS] ?: false,
-                lastApplyTimestamp = preferences[PreferencesKeys.LAST_APPLY_TIMESTAMP] ?: 0L,
-                lastVerifiedSystemLocale = preferences[PreferencesKeys.LAST_VERIFIED_SYSTEM_LOCALE],
-                lastErrorMessage = preferences[PreferencesKeys.LAST_ERROR_MESSAGE]
-            )
-        }
 
     suspend fun saveSelectedLocale(localeTag: String) {
         context.clockDataStore.edit { preferences ->
@@ -68,7 +69,10 @@ class PreferencesRepository(private val context: Context) {
         }
     }
 
-    suspend fun saveApplySuccess(appliedLocaleTag: String, verifiedLocale: String) {
+    suspend fun saveApplySuccess(
+        appliedLocaleTag: String,
+        verifiedLocale: String,
+    ) {
         val now = System.currentTimeMillis()
         context.clockDataStore.edit { preferences ->
             preferences[PreferencesKeys.LAST_APPLIED_LOCALE] = appliedLocaleTag
@@ -79,7 +83,10 @@ class PreferencesRepository(private val context: Context) {
         }
     }
 
-    suspend fun saveApplyFailure(attemptedLocaleTag: String, errorMessage: String) {
+    suspend fun saveApplyFailure(
+        attemptedLocaleTag: String,
+        errorMessage: String,
+    ) {
         val now = System.currentTimeMillis()
         context.clockDataStore.edit { preferences ->
             preferences[PreferencesKeys.LAST_APPLY_SUCCESS] = false

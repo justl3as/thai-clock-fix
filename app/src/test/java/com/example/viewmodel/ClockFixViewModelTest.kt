@@ -1,15 +1,15 @@
 package com.example.viewmodel
 
 import android.app.Application
+import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.ViewModelStore
 import androidx.test.core.app.ApplicationProvider
 import com.example.data.PreferencesRepository
 import com.example.data.clockDataStore
-import androidx.datastore.preferences.core.edit
 import com.example.model.LocaleMode
 import com.example.service.ApplyResult
-import com.example.service.SystemUiSettings
 import com.example.service.SystemUiLocaleService
+import com.example.service.SystemUiSettings
 import com.example.shizuku.ShizukuManager
 import com.example.shizuku.ShizukuStatus
 import kotlinx.coroutines.*
@@ -92,10 +92,17 @@ class ClockFixViewModelTest {
         val events = mutableListOf<String>()
         val service = FixtureService().apply {
             apply = { mode ->
-                events += "apply-start"; entered.complete(Unit); release.await(); events += "apply-end"
+                events += "apply-start"
+                entered.complete(Unit)
+                release.await()
+                events += "apply-end"
                 Result.success(ApplyResult(true, mode.tag, mode.tag, true, ""))
             }
-            restore = { events += "restore"; restored.complete(Unit); Result.success(ApplyResult(true, "", "system_default", true, "")) }
+            restore = {
+                events += "restore"
+                restored.complete(Unit)
+                Result.success(ApplyResult(true, "", "system_default", true, ""))
+            }
         }
         val vm = viewModel(service)
         vm.applySelectedLocale()
@@ -112,11 +119,19 @@ class ClockFixViewModelTest {
         val release = CompletableDeferred<Unit>()
         var restoreCalls = 0
         val service = FixtureService().apply {
-            apply = { mode -> entered.complete(Unit); release.await(); Result.success(ApplyResult(true, mode.tag, mode.tag, true, "")) }
-            restore = { restoreCalls++; Result.success(ApplyResult(true, "", "system_default", true, "")) }
+            apply = { mode ->
+                entered.complete(Unit)
+                release.await()
+                Result.success(ApplyResult(true, mode.tag, mode.tag, true, ""))
+            }
+            restore = {
+                restoreCalls++
+                Result.success(ApplyResult(true, "", "system_default", true, ""))
+            }
         }
         val vm = viewModel(service)
-        vm.applySelectedLocale(); entered.await()
+        vm.applySelectedLocale()
+        entered.await()
         vm.restoreDefaultLocale()
         status(ShizukuStatus.DENIED)
         release.complete(Unit)
@@ -129,10 +144,18 @@ class ClockFixViewModelTest {
         val release = CompletableDeferred<Unit>()
         val service = FixtureService()
         val vm = viewModel(service)
-        service.query = { entered.complete(Unit); release.await(); Result.success("en-US") }
-        vm.checkActualSystemUiLocale(); entered.await()
+        service.query = {
+            entered.complete(Unit)
+            release.await()
+            Result.success("en-US")
+        }
+        vm.checkActualSystemUiLocale()
+        entered.await()
         val applied = CompletableDeferred<Unit>()
-        service.apply = { mode -> applied.complete(Unit); Result.success(ApplyResult(true, mode.tag, mode.tag, true, "")) }
+        service.apply = { mode ->
+            applied.complete(Unit)
+            Result.success(ApplyResult(true, mode.tag, mode.tag, true, ""))
+        }
         vm.applySelectedLocale()
         assertFalse("mutation must wait for the readback", applied.isCompleted)
         release.complete(Unit)
@@ -158,8 +181,13 @@ class ClockFixViewModelTest {
         val vm = viewModel(service)
         val entered = CompletableDeferred<Unit>()
         val release = CompletableDeferred<Unit>()
-        service.query = { entered.complete(Unit); release.await(); Result.success("en-US") }
-        vm.checkActualSystemUiLocale(); entered.await()
+        service.query = {
+            entered.complete(Unit)
+            release.await()
+            Result.success("en-US")
+        }
+        vm.checkActualSystemUiLocale()
+        entered.await()
         status(ShizukuStatus.DENIED)
         release.complete(Unit)
         assertNull(vm.uiState.value.actualSystemUiLocale)
@@ -171,8 +199,13 @@ class ClockFixViewModelTest {
         val vm = viewModel(service)
         val entered = CompletableDeferred<Unit>()
         val release = CompletableDeferred<Unit>()
-        service.apply = { mode -> entered.complete(Unit); release.await(); Result.success(ApplyResult(true, mode.tag, mode.tag, true, "")) }
-        vm.applySelectedLocale(); entered.await()
+        service.apply = { mode ->
+            entered.complete(Unit)
+            release.await()
+            Result.success(ApplyResult(true, mode.tag, mode.tag, true, ""))
+        }
+        vm.applySelectedLocale()
+        entered.await()
         status(ShizukuStatus.DENIED)
         release.complete(Unit)
         withTimeout(3_000) { vm.uiState.first { !it.isApplying } }

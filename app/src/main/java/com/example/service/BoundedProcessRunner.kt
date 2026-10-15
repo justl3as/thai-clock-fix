@@ -1,8 +1,5 @@
 package com.example.service
 
-import java.io.ByteArrayOutputStream
-import java.io.IOException
-import java.io.InputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -10,12 +7,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import java.io.ByteArrayOutputStream
+import java.io.IOException
+import java.io.InputStream
 
 /** Owns both pipes and the process, including cancellation and partial failures. */
 internal class BoundedProcessRunner(
     private val startProcess: (String) -> Process,
     private val timeoutMs: Long = 10_000,
-    private val outputLimitBytes: Int = 64 * 1024
+    private val outputLimitBytes: Int = 64 * 1024,
 ) {
     init {
         require(timeoutMs > 0)
@@ -42,15 +42,16 @@ internal class BoundedProcessRunner(
                         var exit: Int?
                         do {
                             ensureActive()
-                            exit = try {
-                                process.exitValue()
-                            } catch (_: IllegalThreadStateException) {
-                                null
-                            } catch (_: IllegalArgumentException) {
-                                null
-                            } catch (_: IllegalStateException) {
-                                null
-                            }
+                            exit =
+                                try {
+                                    process.exitValue()
+                                } catch (_: IllegalThreadStateException) {
+                                    null
+                                } catch (_: IllegalArgumentException) {
+                                    null
+                                } catch (_: IllegalStateException) {
+                                    null
+                                }
                             if (exit == null) delay(20)
                         } while (exit == null)
                         ShellResult(exit == 0, exit, out.await(), err.await())
@@ -64,7 +65,7 @@ internal class BoundedProcessRunner(
                         runCatching { errors.close() }
                     }
                 }
-            } ?: throw IOException("คำสั่งใช้เวลาเกินกำหนด (${timeoutMs} ms)")
+            } ?: throw IOException("คำสั่งใช้เวลาเกินกำหนด ($timeoutMs ms)")
         } finally {
             runCatching {
                 process.destroy()

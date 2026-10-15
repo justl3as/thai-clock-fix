@@ -26,7 +26,7 @@ private val DarkColorScheme = darkColorScheme(
     surface = md_theme_dark_surface,
     onSurface = md_theme_dark_onSurface,
     surfaceVariant = md_theme_dark_surfaceVariant,
-    onSurfaceVariant = md_theme_dark_onSurfaceVariant
+    onSurfaceVariant = md_theme_dark_onSurfaceVariant,
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -43,7 +43,7 @@ private val LightColorScheme = lightColorScheme(
     surface = md_theme_light_surface,
     onSurface = md_theme_light_onSurface,
     surfaceVariant = md_theme_light_surfaceVariant,
-    onSurfaceVariant = md_theme_light_onSurfaceVariant
+    onSurfaceVariant = md_theme_light_onSurfaceVariant,
 )
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -51,14 +51,16 @@ private val LightColorScheme = lightColorScheme(
 fun ThaiClockFixTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
+
         darkTheme -> DarkColorScheme
+
         else -> LightColorScheme
     }
 
@@ -66,6 +68,6 @@ fun ThaiClockFixTheme(
         colorScheme = colorScheme,
         motionScheme = MotionScheme.expressive(),
         typography = Typography,
-        content = content
+        content = content,
     )
 }

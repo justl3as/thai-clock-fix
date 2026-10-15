@@ -12,8 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -51,8 +51,8 @@ import com.example.R
 import com.example.model.PrimaryAction
 import com.example.ui.components.AdbCommandsDialog
 import com.example.ui.components.FaqAndTipsDialog
-import com.example.ui.components.HeroClock
 import com.example.ui.components.FormatToggleGroup
+import com.example.ui.components.HeroClock
 import com.example.ui.components.PrimaryActionBar
 import com.example.ui.components.RestoreConfirmDialog
 import com.example.ui.components.ShizukuBottomSheet
@@ -69,7 +69,7 @@ import com.example.viewmodel.ClockFixViewModel
 @Composable
 fun ClockFixMainScreen(
     viewModel: ClockFixViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -97,7 +97,7 @@ fun ClockFixMainScreen(
         uiState.actualIs24Hour,
         uiState.isApplying,
         uiState.isCheckingSystem,
-        uiState.lastError
+        uiState.lastError,
     ) {
         PrimaryAction.resolve(
             shizukuStatus = uiState.shizukuStatus,
@@ -106,7 +106,7 @@ fun ClockFixMainScreen(
             isApplying = uiState.isApplying,
             hasError = uiState.lastError != null,
             is24Hour = uiState.actualIs24Hour,
-            isChecking = uiState.isCheckingSystem
+            isChecking = uiState.isCheckingSystem,
         )
     }
 
@@ -116,96 +116,96 @@ fun ClockFixMainScreen(
                 title = {
                     Text(
                         text = stringResource(R.string.app_name),
-                        style = MaterialTheme.typography.titleLarge
+                        style = MaterialTheme.typography.titleLarge,
                     )
                 },
                 actions = {
                     IconButton(
                         onClick = { viewModel.showFaqDialog(true) },
-                        modifier = Modifier.testTag("action_faq_button")
+                        modifier = Modifier.testTag("action_faq_button"),
                     ) {
                         Icon(
                             imageVector = Icons.Default.Lightbulb,
                             contentDescription = stringResource(R.string.faq_icon_cd),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
 
                     Box {
                         IconButton(
                             onClick = { showOverflowMenu = true },
-                            modifier = Modifier.testTag("action_overflow_button")
+                            modifier = Modifier.testTag("action_overflow_button"),
                         ) {
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
                                 contentDescription = stringResource(R.string.overflow_menu_cd),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
 
                         DropdownMenu(
                             expanded = showOverflowMenu,
-                            onDismissRequest = { showOverflowMenu = false }
+                            onDismissRequest = { showOverflowMenu = false },
                         ) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.menu_restore)) },
                                 leadingIcon = {
                                     Icon(
                                         imageVector = Icons.Default.Restore,
-                                        contentDescription = null
+                                        contentDescription = null,
                                     )
                                 },
                                 onClick = {
                                     showOverflowMenu = false
                                     viewModel.showRestoreDialog(true)
-                                }
+                                },
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.menu_adb_commands)) },
                                 leadingIcon = {
                                     Icon(
                                         imageVector = Icons.Default.Code,
-                                        contentDescription = null
+                                        contentDescription = null,
                                     )
                                 },
                                 onClick = {
                                     showOverflowMenu = false
                                     viewModel.showAdbDialog(true)
-                                }
+                                },
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.menu_shizuku_connection)) },
                                 leadingIcon = {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.HelpOutline,
-                                        contentDescription = null
+                                        contentDescription = null,
                                     )
                                 },
                                 onClick = {
                                     showOverflowMenu = false
                                     viewModel.showShizukuSheet(true)
-                                }
+                                },
                             )
                         }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
                 ),
-                modifier = Modifier.testTag("top_app_bar")
+                modifier = Modifier.testTag("top_app_bar"),
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize(),
     ) { innerPadding ->
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background),
-            contentAlignment = Alignment.TopCenter
+            contentAlignment = Alignment.TopCenter,
         ) {
             // Zero-Scroll Core Flow: flex the hero into the viewport when there is room;
             // fall back to scrolling on short viewports (landscape, small screens).
@@ -219,32 +219,32 @@ fun ClockFixMainScreen(
                     // Horizontal safe-drawing keeps content clear of display cutouts in
                     // landscape; bottom keeps the gesture/navigation bar distance.
                     .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
                 // 1. Hero Clock (takes remaining height when there is room)
                 HeroClock(
                     mode = uiState.selectedMode,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .then(if (flexHero) Modifier.weight(1f) else Modifier)
+                        .then(if (flexHero) Modifier.weight(1f) else Modifier),
                 )
 
                 // 2. Format Selection: Connected M3 Toggle Group (subtitle lives inside each button)
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Text(
                         text = stringResource(R.string.format_section_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
 
                     FormatToggleGroup(
                         selectedMode = uiState.selectedMode,
-                        onModeSelect = { viewModel.selectMode(it) }
+                        onModeSelect = { viewModel.selectMode(it) },
                     )
                 }
 
@@ -261,7 +261,7 @@ fun ClockFixMainScreen(
                             else -> {}
                         }
                     },
-                    lastError = uiState.lastError
+                    lastError = uiState.lastError,
                 )
             }
         }
@@ -274,14 +274,14 @@ fun ClockFixMainScreen(
             onOpenShizuku = { viewModel.openShizukuApp() },
             onRequestPermission = { viewModel.requestShizukuPermission() },
             onRefreshStatus = { viewModel.refreshShizukuStatus() },
-            onDismiss = { viewModel.showShizukuSheet(false) }
+            onDismiss = { viewModel.showShizukuSheet(false) },
         )
     }
 
     if (uiState.showRestoreConfirmDialog) {
         RestoreConfirmDialog(
             onConfirm = { viewModel.restoreDefaultLocale() },
-            onDismiss = { viewModel.showRestoreDialog(false) }
+            onDismiss = { viewModel.showRestoreDialog(false) },
         )
     }
 
@@ -290,13 +290,13 @@ fun ClockFixMainScreen(
             mode = uiState.selectedMode,
             commands = viewModel.getAdbCommands(),
             restoreCommands = viewModel.getRestoreAdbCommands(),
-            onDismiss = { viewModel.showAdbDialog(false) }
+            onDismiss = { viewModel.showAdbDialog(false) },
         )
     }
 
     if (uiState.showFaqDialog) {
         FaqAndTipsDialog(
-            onDismiss = { viewModel.showFaqDialog(false) }
+            onDismiss = { viewModel.showFaqDialog(false) },
         )
     }
 }

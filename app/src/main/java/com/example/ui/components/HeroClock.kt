@@ -37,8 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.R
 import com.example.model.LocaleMode
-import java.time.LocalDateTime
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDateTime
 
 /**
  * Material 3 Expressive Hero Clock:
@@ -52,7 +52,7 @@ import kotlinx.coroutines.flow.Flow
 fun HeroClock(
     mode: LocaleMode,
     modifier: Modifier = Modifier,
-    timeFlow: Flow<LocalDateTime> = remember { previewTimes() }
+    timeFlow: Flow<LocalDateTime> = remember { previewTimes() },
 ) {
     val sampleTime by timeFlow.collectAsStateWithLifecycle(initialValue = remember { LocalDateTime.now() })
     val timeFormatted = mode.formatTime24h(sampleTime)
@@ -69,26 +69,26 @@ fun HeroClock(
             },
         shape = RoundedCornerShape(32.dp),
         color = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterVertically)
+            verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterVertically),
         ) {
             // Selected-format time and date preview
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Center,
             ) {
                 // Big Clock Numerals (Emphasized display scale)
                 Text(
                     text = timeFormatted,
                     style = MaterialTheme.typography.displayLarge,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.testTag("hero_clock_time")
+                    modifier = Modifier.testTag("hero_clock_time"),
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -100,14 +100,14 @@ fun HeroClock(
                         fadeIn(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) togetherWith
                             fadeOut(animationSpec = spring(stiffness = Spring.StiffnessHigh))
                     },
-                    label = "hero_date_anim"
+                    label = "hero_date_anim",
                 ) { targetDate ->
                     Text(
                         text = targetDate,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f),
-                        modifier = Modifier.testTag("hero_clock_date")
+                        modifier = Modifier.testTag("hero_clock_date"),
                     )
                 }
             }
@@ -116,24 +116,24 @@ fun HeroClock(
             Surface(
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.surface.copy(alpha = 0.22f),
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Visibility,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(14.dp),
                     )
                     Text(
                         text = stringResource(R.string.hero_preview_badge),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                 }
             }

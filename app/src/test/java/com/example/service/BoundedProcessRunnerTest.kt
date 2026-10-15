@@ -1,19 +1,19 @@
 package com.example.service
 
+import kotlinx.coroutines.*
+import org.junit.Assert.*
+import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.*
-import org.junit.Assert.*
-import org.junit.Test
 
 class BoundedProcessRunnerTest {
     private class FixtureProcess(
         private val stdout: InputStream = ByteArrayInputStream(byteArrayOf()),
-        private val stderr: InputStream = ByteArrayInputStream(byteArrayOf())
+        private val stderr: InputStream = ByteArrayInputStream(byteArrayOf()),
     ) : Process() {
         var destroyed = false
         override fun getInputStream() = stdout
@@ -21,7 +21,11 @@ class BoundedProcessRunnerTest {
         override fun getOutputStream() = ByteArrayOutputStream()
         override fun waitFor() = 0
         override fun exitValue() = 0
-        override fun destroy() { destroyed = true; stdout.close(); stderr.close() }
+        override fun destroy() {
+            destroyed = true
+            stdout.close()
+            stderr.close()
+        }
     }
 
     @Test fun bothStreamsAreDrainedConcurrently() = runBlocking {
@@ -55,8 +59,9 @@ class BoundedProcessRunnerTest {
         } catch (_: IOException) {
             withTimeout(1_000) { while (process.isAlive) delay(10) }
             assertFalse(process.isAlive)
+        } finally {
+            process.destroy()
         }
-        finally { process.destroy() }
         withTimeout(1_000) { while (process.isAlive) delay(10) }
         assertFalse(process.isAlive)
     }
@@ -65,14 +70,20 @@ class BoundedProcessRunnerTest {
         val process = ProcessBuilder("/bin/sh", "-c", "exec sleep 2").start()
         val started = CompletableDeferred<Unit>()
         val job = launch(Dispatchers.IO) {
-            BoundedProcessRunner({ started.complete(Unit); process }).execute("fixture")
+            BoundedProcessRunner({
+                started.complete(Unit)
+                process
+            }).execute("fixture")
         }
         started.await()
         try {
             job.cancel()
             withTimeout(700) { job.join() }
             assertFalse(process.isAlive)
-        } finally { process.destroy(); job.cancelAndJoin() }
+        } finally {
+            process.destroy()
+            job.cancelAndJoin()
+        }
     }
 
     @Test fun partiallyAcquiredPipesAreClosedWhenAGetterFails() = runBlocking {
@@ -80,10 +91,16 @@ class BoundedProcessRunnerTest {
         var outputClosed = false
         var destroyed = false
         val input = object : ByteArrayInputStream(byteArrayOf()) {
-            override fun close() { inputClosed = true; super.close() }
+            override fun close() {
+                inputClosed = true
+                super.close()
+            }
         }
         val output = object : ByteArrayOutputStream() {
-            override fun close() { outputClosed = true; super.close() }
+            override fun close() {
+                outputClosed = true
+                super.close()
+            }
         }
         val process = object : Process() {
             override fun getInputStream() = input
@@ -91,7 +108,9 @@ class BoundedProcessRunnerTest {
             override fun getOutputStream() = output
             override fun waitFor() = 0
             override fun exitValue() = 0
-            override fun destroy() { destroyed = true }
+            override fun destroy() {
+                destroyed = true
+            }
         }
         try {
             BoundedProcessRunner({ process }).execute("fixture")

@@ -10,7 +10,6 @@ import com.example.ui.theme.ThaiClockFixTheme
 import com.example.viewmodel.ClockFixViewModel
 
 class MainActivity : ComponentActivity() {
-
     private val viewModel: ClockFixViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {

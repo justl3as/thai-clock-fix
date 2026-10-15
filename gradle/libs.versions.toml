@@ -18,6 +18,7 @@ kotlinxCoroutinesCore = "1.10.2"
 datastorePreferences = "1.1.7"
 robolectric = "4.16.1"
 shizuku = "13.1.5"
+spotless = "8.10.4"
 
 
 [libraries]
@@ -53,3 +54,4 @@ shizuku-provider = { group = "dev.rikka.shizuku", name = "provider", version.ref
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

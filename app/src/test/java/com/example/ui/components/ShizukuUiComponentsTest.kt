@@ -3,8 +3,8 @@ package com.example.ui.components
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.example.shizuku.ShizukuStatus
@@ -22,7 +22,6 @@ import org.robolectric.annotation.GraphicsMode
 @Config(sdk = [34])
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class ShizukuUiComponentsTest {
-
     @get:Rule val compose = createComposeRule()
 
     @Test
@@ -37,7 +36,7 @@ class ShizukuUiComponentsTest {
                     onOpenShizuku = { openInstallClicked = true },
                     onRequestPermission = {},
                     onRefreshStatus = {},
-                    onDismiss = { dismissed = true }
+                    onDismiss = { dismissed = true },
                 )
             }
         }
@@ -51,7 +50,11 @@ class ShizukuUiComponentsTest {
         compose.onNodeWithText("สิทธิ์อนุญาต").assertExists()
 
         // Click install
-        compose.onNodeWithText("ติดตั้ง Shizuku จาก Google Play").assertExists().assertHasClickAction().performClick()
+        compose
+            .onNodeWithText("ติดตั้ง Shizuku จาก Google Play")
+            .assertExists()
+            .assertHasClickAction()
+            .performClick()
         assertTrue(openInstallClicked)
         assertTrue(dismissed) // onOpenShizuku calls onDismiss as well
     }
@@ -68,7 +71,7 @@ class ShizukuUiComponentsTest {
                     onOpenShizuku = { openShizukuClicked = true },
                     onRequestPermission = {},
                     onRefreshStatus = { refreshClicked = true },
-                    onDismiss = {}
+                    onDismiss = {},
                 )
             }
         }
@@ -100,7 +103,7 @@ class ShizukuUiComponentsTest {
                     onOpenShizuku = {},
                     onRequestPermission = { grantClicked = true },
                     onRefreshStatus = {},
-                    onDismiss = { dismissed = true }
+                    onDismiss = { dismissed = true },
                 )
             }
         }
@@ -122,7 +125,7 @@ class ShizukuUiComponentsTest {
                     onOpenShizuku = { openClicked = true },
                     onRequestPermission = { retryPermissionClicked = true },
                     onRefreshStatus = {},
-                    onDismiss = {}
+                    onDismiss = {},
                 )
             }
         }
@@ -147,11 +150,10 @@ class ShizukuUiComponentsTest {
                     onOpenShizuku = { openClicked = true },
                     onRequestPermission = {},
                     onRefreshStatus = { refreshClicked = true },
-                    onDismiss = {}
+                    onDismiss = {},
                 )
             }
         }
-
 
         compose.onNodeWithText("เปิดแอป Shizuku").assertExists().performClick()
         assertTrue(openClicked)
@@ -171,7 +173,7 @@ class ShizukuUiComponentsTest {
                     onOpenShizuku = {},
                     onRequestPermission = {},
                     onRefreshStatus = {},
-                    onDismiss = { dismissed = true }
+                    onDismiss = { dismissed = true },
                 )
             }
         }

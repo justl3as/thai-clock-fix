@@ -33,21 +33,20 @@ data class ClockFixUiState(
     val showRestoreConfirmDialog: Boolean = false,
     val showAdbCommandsDialog: Boolean = false,
     val showFaqDialog: Boolean = false,
-    val showShizukuSheet: Boolean = false
+    val showShizukuSheet: Boolean = false,
 )
 
 class ClockFixViewModel(
     application: Application,
     private val preferencesRepository: PreferencesRepository,
     val shizukuManager: ShizukuManager,
-    private val localeService: SystemUiLocaleService
+    private val localeService: SystemUiLocaleService,
 ) : AndroidViewModel(application) {
-
     constructor(application: Application) : this(
         application = application,
         preferencesRepository = PreferencesRepository(application),
         shizukuManager = ShizukuManager(application),
-        localeService = ShizukuSystemUiLocaleService()
+        localeService = ShizukuSystemUiLocaleService(),
     )
 
     private val _uiState = MutableStateFlow(ClockFixUiState())
@@ -125,9 +124,13 @@ class ClockFixViewModel(
                     it.copy(
                         actualSystemUiLocale = applied.verifiedLocale,
                         actualIs24Hour = if (mode == null) null else true,
-                            userNotice = if (mode == null) stringRes(R.string.vm_restore_success)
-                                else stringRes(R.string.vm_apply_success),
-                        lastError = null
+                        userNotice =
+                        if (mode == null) {
+                            stringRes(R.string.vm_restore_success)
+                        } else {
+                            stringRes(R.string.vm_apply_success)
+                        },
+                        lastError = null,
                     )
                 }
             } else {
@@ -135,7 +138,7 @@ class ClockFixViewModel(
                     it.copy(
                         actualSystemUiLocale = null,
                         actualIs24Hour = null,
-                        userNotice = null
+                        userNotice = null,
                     )
                 }
             }
@@ -169,14 +172,14 @@ class ClockFixViewModel(
                         _uiState.update {
                             it.copy(
                                 actualSystemUiLocale = settings.locale,
-                                actualIs24Hour = settings.is24Hour
+                                actualIs24Hour = settings.is24Hour,
                             )
                         }
                     } else {
                         _uiState.update {
                             it.copy(
                                 actualSystemUiLocale = null,
-                                actualIs24Hour = null
+                                actualIs24Hour = null,
                             )
                         }
                     }
@@ -234,15 +237,13 @@ class ClockFixViewModel(
         _uiState.update { it.copy(lastError = null) }
     }
 
-    fun getAdbCommands(): List<String> {
-        return localeService.getAdbCommands(_uiState.value.selectedMode)
-    }
+    fun getAdbCommands(): List<String> = localeService.getAdbCommands(_uiState.value.selectedMode)
 
-    fun getRestoreAdbCommands(): List<String> {
-        return localeService.getAdbCommands(null)
-    }
+    fun getRestoreAdbCommands(): List<String> = localeService.getAdbCommands(null)
 
-    private fun stringRes(@StringRes id: Int): String = getApplication<Application>().getString(id)
+    private fun stringRes(
+        @StringRes id: Int,
+    ): String = getApplication<Application>().getString(id)
 
     override fun onCleared() {
         super.onCleared()

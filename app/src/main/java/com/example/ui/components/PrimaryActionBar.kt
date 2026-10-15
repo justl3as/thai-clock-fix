@@ -35,8 +35,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -55,31 +55,30 @@ fun PrimaryActionBar(
     action: PrimaryAction,
     onActionClick: (PrimaryAction) -> Unit,
     lastError: String?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val haptic = LocalHapticFeedback.current
 
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         // Optional error banner with retry hint
         if (lastError != null && action is PrimaryAction.Retry) {
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = MaterialTheme.colorScheme.errorContainer,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
                     text = lastError,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onErrorContainer,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                 )
             }
         }
-
 
         // The Single State-Aware Button (Large Container, 56-64dp)
         if (action is PrimaryAction.AlreadyApplied) {
@@ -90,17 +89,17 @@ fun PrimaryActionBar(
                 shape = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.filledTonalButtonColors(
                     disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.65f),
-                    disabledContentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    disabledContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 56.dp)
-                    .testTag("primary_action_applied")
+                    .testTag("primary_action_applied"),
             ) {
                 ButtonContent(
                     icon = Icons.Default.Check,
                     label = stringResource(PrimaryAction.AlreadyApplied.labelRes),
-                    iconSize = 20.dp
+                    iconSize = 20.dp,
                 )
             }
         } else {
@@ -113,13 +112,13 @@ fun PrimaryActionBar(
                 enabled = action.enabled,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
                 ),
                 shape = RoundedCornerShape(28.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 56.dp)
-                    .testTag("primary_action_button")
+                    .testTag("primary_action_button"),
             ) {
                 AnimatedContent(
                     targetState = action,
@@ -127,28 +126,28 @@ fun PrimaryActionBar(
                         fadeIn(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) togetherWith
                             fadeOut(animationSpec = spring(stiffness = Spring.StiffnessHigh))
                     },
-                    label = "action_btn_content"
+                    label = "action_btn_content",
                 ) { targetAction ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
+                        horizontalArrangement = Arrangement.Center,
                     ) {
                         if (targetAction is PrimaryAction.Applying || targetAction is PrimaryAction.Checking) {
                             LoadingIndicator(
                                 modifier = Modifier.size(22.dp),
-                                color = MaterialTheme.colorScheme.onPrimary
+                                color = MaterialTheme.colorScheme.onPrimary,
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
                                 text = stringResource(targetAction.labelRes),
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
                             )
                         } else {
                             ButtonContent(
                                 icon = actionIcon(targetAction),
                                 label = stringResource(targetAction.labelRes),
-                                iconSize = 20.dp
+                                iconSize = 20.dp,
                             )
                         }
                     }

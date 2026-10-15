@@ -22,12 +22,12 @@ import androidx.compose.ui.unit.dp
 internal fun RowScope.ButtonContent(
     icon: ImageVector,
     label: String,
-    iconSize: Dp = 18.dp
+    iconSize: Dp = 18.dp,
 ) {
     Icon(
         imageVector = icon,
         contentDescription = null,
-        modifier = Modifier.size(iconSize)
+        modifier = Modifier.size(iconSize),
     )
     Spacer(modifier = Modifier.width(8.dp))
     Text(text = label)

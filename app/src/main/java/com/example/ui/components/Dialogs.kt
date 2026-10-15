@@ -53,7 +53,7 @@ import com.example.model.LocaleMode
 @Composable
 fun RestoreConfirmDialog(
     onConfirm: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -61,14 +61,14 @@ fun RestoreConfirmDialog(
             Surface(
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(48.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = Icons.Default.Restore,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(24.dp),
                     )
                 }
             }
@@ -79,44 +79,44 @@ fun RestoreConfirmDialog(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
         },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 Text(
                     text = stringResource(R.string.restore_body),
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     lineHeight = 20.sp,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
 
                 Surface(
                     shape = RoundedCornerShape(10.dp),
                     color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
+                        horizontalArrangement = Arrangement.Center,
                     ) {
                         Icon(
                             imageVector = Icons.Default.Security,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(16.dp),
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = stringResource(R.string.restore_scope_note),
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -127,7 +127,7 @@ fun RestoreConfirmDialog(
                 onClick = onConfirm,
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                modifier = Modifier.testTag("confirm_restore_button")
+                modifier = Modifier.testTag("confirm_restore_button"),
             ) {
                 Text(stringResource(R.string.btn_confirm_restore))
             }
@@ -136,11 +136,11 @@ fun RestoreConfirmDialog(
             TextButton(
                 onClick = onDismiss,
                 shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.testTag("cancel_restore_button")
+                modifier = Modifier.testTag("cancel_restore_button"),
             ) {
                 Text(stringResource(R.string.btn_cancel))
             }
-        }
+        },
     )
 }
 
@@ -149,7 +149,7 @@ fun AdbCommandsDialog(
     mode: LocaleMode,
     commands: List<String>,
     restoreCommands: List<String>,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
 
@@ -159,14 +159,14 @@ fun AdbCommandsDialog(
             Surface(
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(48.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = Icons.Default.Terminal,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(24.dp),
                     )
                 }
             }
@@ -175,7 +175,7 @@ fun AdbCommandsDialog(
             Text(
                 text = stringResource(R.string.adb_title),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
         },
         text = {
@@ -183,19 +183,19 @@ fun AdbCommandsDialog(
                 modifier = Modifier
                     .verticalScroll(rememberScrollState())
                     .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(
                     text = stringResource(R.string.adb_intro),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
                 Text(
                     text = stringResource(R.string.adb_section_for_mode, stringResource(mode.titleRes)),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
                 )
 
                 commands.forEach { cmd ->
@@ -208,7 +208,7 @@ fun AdbCommandsDialog(
                     text = stringResource(R.string.adb_section_restore),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.secondary
+                    color = MaterialTheme.colorScheme.secondary,
                 )
 
                 restoreCommands.forEach { cmd ->
@@ -222,7 +222,7 @@ fun AdbCommandsDialog(
                     val allText = (commands + restoreCommands).joinToString("\n")
                     copyToClipboard(context, "ADB Commands", allText)
                 },
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
             ) {
                 ButtonContent(icon = Icons.Default.ContentCopy, label = stringResource(R.string.btn_copy_all), iconSize = 16.dp)
             }
@@ -230,11 +230,11 @@ fun AdbCommandsDialog(
         dismissButton = {
             TextButton(
                 onClick = onDismiss,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
             ) {
                 Text(stringResource(R.string.btn_close))
             }
-        }
+        },
     )
 }
 
@@ -244,33 +244,33 @@ private fun AdbCommandSnippet(cmd: String, context: Context) {
         shape = RoundedCornerShape(10.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHighest,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
             modifier = Modifier
                 .padding(horizontal = 10.dp, vertical = 6.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
                 text = cmd,
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontFamily = FontFamily.Monospace,
-                    fontSize = 11.sp
+                    fontSize = 11.sp,
                 ),
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
             IconButton(
                 onClick = { copyToClipboard(context, "Command", cmd) },
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(32.dp),
             ) {
                 Icon(
                     imageVector = Icons.Default.ContentCopy,
                     contentDescription = stringResource(R.string.copy_command_cd),
                     modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colorScheme.primary,
                 )
             }
         }
@@ -279,7 +279,7 @@ private fun AdbCommandSnippet(cmd: String, context: Context) {
 
 @Composable
 fun FaqAndTipsDialog(
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -289,13 +289,13 @@ fun FaqAndTipsDialog(
                     imageVector = Icons.Default.Lightbulb,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(22.dp),
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = stringResource(R.string.faq_title),
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
         },
@@ -304,62 +304,62 @@ fun FaqAndTipsDialog(
                 modifier = Modifier
                     .verticalScroll(rememberScrollState())
                     .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 FaqItem(
                     question = stringResource(R.string.faq_q1),
-                    answer = stringResource(R.string.faq_a1)
+                    answer = stringResource(R.string.faq_a1),
                 )
 
                 FaqItem(
                     question = stringResource(R.string.faq_q2),
-                    answer = stringResource(R.string.faq_a2)
+                    answer = stringResource(R.string.faq_a2),
                 )
 
                 FaqItem(
                     question = stringResource(R.string.faq_q3),
-                    answer = stringResource(R.string.faq_a3)
+                    answer = stringResource(R.string.faq_a3),
                 )
 
                 FaqItem(
                     question = stringResource(R.string.faq_q4),
-                    answer = stringResource(R.string.faq_a4)
+                    answer = stringResource(R.string.faq_a4),
                 )
 
                 FaqItem(
                     question = stringResource(R.string.faq_q5),
-                    answer = stringResource(R.string.faq_a5)
+                    answer = stringResource(R.string.faq_a5),
                 )
 
                 Surface(
                     shape = RoundedCornerShape(12.dp),
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Row(
                         modifier = Modifier.padding(12.dp),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.Top
+                        verticalAlignment = Alignment.Top,
                     ) {
                         Icon(
                             imageVector = Icons.Default.TipsAndUpdates,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp).padding(top = 2.dp)
+                            modifier = Modifier.size(18.dp).padding(top = 2.dp),
                         )
                         Column {
                             Text(
                                 text = stringResource(R.string.faq_tips_title),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.primary,
                             )
                             Spacer(modifier = Modifier.height(3.dp))
                             Text(
                                 text = stringResource(R.string.faq_tips_body),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                lineHeight = 19.sp
+                                lineHeight = 19.sp,
                             )
                         }
                     }
@@ -371,11 +371,11 @@ fun FaqAndTipsDialog(
         confirmButton = {
             Button(
                 onClick = onDismiss,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
             ) {
                 Text(stringResource(R.string.btn_got_it))
             }
-        }
+        },
     )
 }
 
@@ -384,21 +384,21 @@ private fun FaqItem(question: String, answer: String) {
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHighest,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(
                 text = question,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = answer,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                lineHeight = 20.sp
+                lineHeight = 20.sp,
             )
         }
     }

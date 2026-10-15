@@ -33,7 +33,7 @@ import com.example.model.LocaleMode
 fun FormatToggleGroup(
     selectedMode: LocaleMode,
     onModeSelect: (LocaleMode) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val haptic = LocalHapticFeedback.current
     val select: (LocaleMode) -> Unit = { mode ->
@@ -45,14 +45,14 @@ fun FormatToggleGroup(
         modifier = modifier
             .fillMaxWidth()
             .height(56.dp),
-        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
     ) {
         FormatToggleButton(
             label = stringResource(LocaleMode.THAI_BUDDHIST.shortLabelRes),
             checked = selectedMode == LocaleMode.THAI_BUDDHIST,
             onSelect = { select(LocaleMode.THAI_BUDDHIST) },
             shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
 
         FormatToggleButton(
@@ -60,7 +60,7 @@ fun FormatToggleGroup(
             checked = selectedMode == LocaleMode.ENGLISH,
             onSelect = { select(LocaleMode.ENGLISH) },
             shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
     }
 }
@@ -71,7 +71,7 @@ private fun FormatToggleButton(
     checked: Boolean,
     onSelect: () -> Unit,
     shapes: ToggleButtonShapes,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     ToggleButton(
         checked = checked,
@@ -79,20 +79,20 @@ private fun FormatToggleButton(
         shapes = shapes,
         modifier = modifier
             .height(56.dp)
-            .semantics { role = Role.RadioButton }
+            .semantics { role = Role.RadioButton },
     ) {
         if (checked) {
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = null,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(18.dp),
             )
             Spacer(modifier = Modifier.width(6.dp))
         }
         Text(
             text = label,
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = if (checked) FontWeight.Bold else FontWeight.Normal
+            fontWeight = if (checked) FontWeight.Bold else FontWeight.Normal,
         )
     }
 }

@@ -10,35 +10,35 @@ import java.util.Locale
 enum class LocaleMode(
     val tag: String,
     @StringRes val titleRes: Int,
-    @StringRes val shortLabelRes: Int
+    @StringRes val shortLabelRes: Int,
 ) {
     THAI_BUDDHIST(
         tag = "th-TH-u-ca-buddhist",
         titleRes = R.string.mode_thai_title,
-        shortLabelRes = R.string.mode_thai_short
+        shortLabelRes = R.string.mode_thai_short,
     ),
     ENGLISH(
         tag = "en-US",
         titleRes = R.string.mode_english_title,
-        shortLabelRes = R.string.mode_english_short
-    );
+        shortLabelRes = R.string.mode_english_short,
+    ),
+    ;
 
-    fun formatTime24h(dateTime: LocalDateTime): String {
-        return dateTime.format(DateTimeFormatter.ofPattern("HH:mm", Locale.US))
-    }
+    fun formatTime24h(dateTime: LocalDateTime): String = dateTime.format(DateTimeFormatter.ofPattern("HH:mm", Locale.US))
 
-    fun formatDatePreview(dateTime: LocalDateTime): String {
-        return when (this) {
-            THAI_BUDDHIST -> {
-                val thaiLocale = Locale.forLanguageTag("th-TH")
-                val formatter = DateTimeFormatter.ofPattern("EEE d MMM yyyy", thaiLocale)
+    fun formatDatePreview(dateTime: LocalDateTime): String = when (this) {
+        THAI_BUDDHIST -> {
+            val thaiLocale = Locale.forLanguageTag("th-TH")
+            val formatter =
+                DateTimeFormatter
+                    .ofPattern("EEE d MMM yyyy", thaiLocale)
                     .withChronology(ThaiBuddhistChronology.INSTANCE)
-                dateTime.format(formatter)
-            }
-            ENGLISH -> {
-                val formatter = DateTimeFormatter.ofPattern("EEE, d MMM yyyy", Locale.US)
-                dateTime.format(formatter)
-            }
+            dateTime.format(formatter)
+        }
+
+        ENGLISH -> {
+            val formatter = DateTimeFormatter.ofPattern("EEE, d MMM yyyy", Locale.US)
+            dateTime.format(formatter)
         }
     }
 

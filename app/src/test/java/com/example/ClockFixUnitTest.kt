@@ -9,7 +9,6 @@ import org.junit.Test
 import java.time.LocalDateTime
 
 class ClockFixUnitTest {
-
     @Test
     fun testLocaleModeTags() {
         assertEquals("en-US", LocaleMode.ENGLISH.tag)
@@ -61,7 +60,10 @@ class ClockFixUnitTest {
         val thaiBuddhistCmds = service.getAdbCommands(LocaleMode.THAI_BUDDHIST)
         assertEquals(3, thaiBuddhistCmds.size)
         assertEquals("adb shell settings --user 0 put system time_12_24 24", thaiBuddhistCmds[0])
-        assertEquals("adb shell cmd locale set-app-locales com.android.systemui --user 0 --locales th-TH-u-ca-buddhist", thaiBuddhistCmds[1])
+        assertEquals(
+            "adb shell cmd locale set-app-locales com.android.systemui --user 0 --locales th-TH-u-ca-buddhist",
+            thaiBuddhistCmds[1],
+        )
         assertEquals("adb shell cmd locale get-app-locales com.android.systemui --user 0", thaiBuddhistCmds[2])
 
         val restoreCmds = service.getAdbCommands(null)
@@ -73,10 +75,14 @@ class ClockFixUnitTest {
     @Test
     fun localePrefixMustNotDisableApplyForADifferentLocale() {
         for (actual in listOf("en-US-x-wrong", "en-US,th-TH-u-ca-buddhist")) {
-            val action = com.example.model.PrimaryAction.resolve(
-                com.example.shizuku.ShizukuStatus.READY, LocaleMode.ENGLISH,
-                actual, isApplying = false, hasError = false
-            )
+            val action =
+                com.example.model.PrimaryAction.resolve(
+                    com.example.shizuku.ShizukuStatus.READY,
+                    LocaleMode.ENGLISH,
+                    actual,
+                    isApplying = false,
+                    hasError = false,
+                )
             assertEquals(com.example.model.PrimaryAction.Apply, action)
         }
     }
@@ -84,19 +90,32 @@ class ClockFixUnitTest {
     @Test
     fun matchingLocaleRequiresConfirmed24HourTimeBeforeDisablingApply() {
         for (time in listOf<Boolean?>(false, null)) {
-            assertEquals(com.example.model.PrimaryAction.Apply, com.example.model.PrimaryAction.resolve(
-                com.example.shizuku.ShizukuStatus.READY, LocaleMode.ENGLISH, "en-US",
-                isApplying = false, hasError = false, is24Hour = time
-            ))
+            assertEquals(
+                com.example.model.PrimaryAction.Apply,
+                com.example.model.PrimaryAction.resolve(
+                    com.example.shizuku.ShizukuStatus.READY,
+                    LocaleMode.ENGLISH,
+                    "en-US",
+                    isApplying = false,
+                    hasError = false,
+                    is24Hour = time,
+                ),
+            )
         }
     }
 
     @Test
     fun omittedTimeReadbackMustNotAssume24HourTime() {
-        assertEquals(com.example.model.PrimaryAction.Apply, com.example.model.PrimaryAction.resolve(
-            com.example.shizuku.ShizukuStatus.READY, LocaleMode.ENGLISH, "en-US",
-            isApplying = false, hasError = false
-        ))
+        assertEquals(
+            com.example.model.PrimaryAction.Apply,
+            com.example.model.PrimaryAction.resolve(
+                com.example.shizuku.ShizukuStatus.READY,
+                LocaleMode.ENGLISH,
+                "en-US",
+                isApplying = false,
+                hasError = false,
+            ),
+        )
     }
 
     @Test
@@ -105,78 +124,84 @@ class ClockFixUnitTest {
         val en = LocaleMode.ENGLISH
 
         // 1. Applying state
-        val applyingAction = com.example.model.PrimaryAction.resolve(
-            shizukuStatus = com.example.shizuku.ShizukuStatus.READY,
-            selectedMode = thai,
-            actualSystemUiLocale = null,
-            isApplying = true,
-            hasError = false
-        )
+        val applyingAction =
+            com.example.model.PrimaryAction.resolve(
+                shizukuStatus = com.example.shizuku.ShizukuStatus.READY,
+                selectedMode = thai,
+                actualSystemUiLocale = null,
+                isApplying = true,
+                hasError = false,
+            )
         assertEquals(com.example.model.PrimaryAction.Applying, applyingAction)
         assertFalse(applyingAction.enabled)
 
         // 2. Shizuku not installed
-        val notInstalledAction = com.example.model.PrimaryAction.resolve(
-            shizukuStatus = com.example.shizuku.ShizukuStatus.NOT_INSTALLED,
-            selectedMode = thai,
-            actualSystemUiLocale = null,
-            isApplying = false,
-            hasError = false
-        )
+        val notInstalledAction =
+            com.example.model.PrimaryAction.resolve(
+                shizukuStatus = com.example.shizuku.ShizukuStatus.NOT_INSTALLED,
+                selectedMode = thai,
+                actualSystemUiLocale = null,
+                isApplying = false,
+                hasError = false,
+            )
         assertEquals(com.example.model.PrimaryAction.InstallShizuku, notInstalledAction)
 
         // 3. Shizuku stopped
-        val stoppedAction = com.example.model.PrimaryAction.resolve(
-            shizukuStatus = com.example.shizuku.ShizukuStatus.SERVICE_STOPPED,
-            selectedMode = thai,
-            actualSystemUiLocale = null,
-            isApplying = false,
-            hasError = false
-        )
+        val stoppedAction =
+            com.example.model.PrimaryAction.resolve(
+                shizukuStatus = com.example.shizuku.ShizukuStatus.SERVICE_STOPPED,
+                selectedMode = thai,
+                actualSystemUiLocale = null,
+                isApplying = false,
+                hasError = false,
+            )
         assertEquals(com.example.model.PrimaryAction.StartShizuku, stoppedAction)
 
         // 4. Shizuku permission required
-        val permAction = com.example.model.PrimaryAction.resolve(
-            shizukuStatus = com.example.shizuku.ShizukuStatus.PERMISSION_REQUIRED,
-            selectedMode = thai,
-            actualSystemUiLocale = null,
-            isApplying = false,
-            hasError = false
-        )
+        val permAction =
+            com.example.model.PrimaryAction.resolve(
+                shizukuStatus = com.example.shizuku.ShizukuStatus.PERMISSION_REQUIRED,
+                selectedMode = thai,
+                actualSystemUiLocale = null,
+                isApplying = false,
+                hasError = false,
+            )
         assertEquals(com.example.model.PrimaryAction.GrantPermission, permAction)
 
         // 5. Already applied
-        val appliedAction = com.example.model.PrimaryAction.resolve(
-            shizukuStatus = com.example.shizuku.ShizukuStatus.READY,
-            selectedMode = thai,
-            actualSystemUiLocale = "th-TH-u-ca-buddhist",
-            isApplying = false,
-            hasError = false,
-            is24Hour = true
-        )
+        val appliedAction =
+            com.example.model.PrimaryAction.resolve(
+                shizukuStatus = com.example.shizuku.ShizukuStatus.READY,
+                selectedMode = thai,
+                actualSystemUiLocale = "th-TH-u-ca-buddhist",
+                isApplying = false,
+                hasError = false,
+                is24Hour = true,
+            )
         assertEquals(com.example.model.PrimaryAction.AlreadyApplied, appliedAction)
         assertFalse(appliedAction.enabled)
 
         // 6. Ready to apply (selected differs from actual)
-        val readyAction = com.example.model.PrimaryAction.resolve(
-            shizukuStatus = com.example.shizuku.ShizukuStatus.READY,
-            selectedMode = en,
-            actualSystemUiLocale = "th-TH-u-ca-buddhist",
-            isApplying = false,
-            hasError = false
-        )
+        val readyAction =
+            com.example.model.PrimaryAction.resolve(
+                shizukuStatus = com.example.shizuku.ShizukuStatus.READY,
+                selectedMode = en,
+                actualSystemUiLocale = "th-TH-u-ca-buddhist",
+                isApplying = false,
+                hasError = false,
+            )
         assertEquals(com.example.model.PrimaryAction.Apply, readyAction)
         assertTrue(readyAction.enabled)
 
         // 7. Retry on error
-        val retryAction = com.example.model.PrimaryAction.resolve(
-            shizukuStatus = com.example.shizuku.ShizukuStatus.READY,
-            selectedMode = en,
-            actualSystemUiLocale = null,
-            isApplying = false,
-            hasError = true
-        )
+        val retryAction =
+            com.example.model.PrimaryAction.resolve(
+                shizukuStatus = com.example.shizuku.ShizukuStatus.READY,
+                selectedMode = en,
+                actualSystemUiLocale = null,
+                isApplying = false,
+                hasError = true,
+            )
         assertEquals(com.example.model.PrimaryAction.Retry, retryAction)
     }
 }
-
