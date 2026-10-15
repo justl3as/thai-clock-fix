@@ -230,6 +230,24 @@ class ClockFixViewModelTest {
             PreferencesRepository(app).preferencesFlow.first { it.selectedLocaleTag == "en-US" }
         }
         assertEquals(LocaleMode.ENGLISH, saved.selectedMode)
+        assertEquals(LocaleMode.ENGLISH, vm.uiState.value.selectedMode)
+    }
+
+    @Test fun persistedPreferenceCannotOverwriteSessionSelection() = runBlocking {
+        val repository = PreferencesRepository(app)
+        val vm = viewModel(FixtureService())
+
+        vm.selectMode(LocaleMode.ENGLISH)
+        withTimeout(3_000) {
+            repository.preferencesFlow.first { it.selectedMode == LocaleMode.ENGLISH }
+        }
+
+        repository.saveSelectedLocale(LocaleMode.THAI_BUDDHIST.tag)
+        withTimeout(3_000) {
+            repository.preferencesFlow.first { it.selectedMode == LocaleMode.THAI_BUDDHIST }
+        }
+
+        assertEquals(LocaleMode.ENGLISH, vm.uiState.value.selectedMode)
     }
 
     @Test fun dialogFlagsRoundTripThroughUiState() {

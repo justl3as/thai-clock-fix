@@ -53,6 +53,9 @@ class ClockFixViewModel(
     val uiState: StateFlow<ClockFixUiState> = _uiState.asStateFlow()
 
     private val operationMutex = Mutex()
+    private val selectionLock = Any()
+    private var preferencesLoaded = false
+    private var sessionSelectedMode: LocaleMode? = null
 
     init {
         // 1. Initialize Shizuku manager
@@ -63,7 +66,14 @@ class ClockFixViewModel(
         // here would replay a stale error snackbar on every app launch.
         viewModelScope.launch {
             preferencesRepository.preferencesFlow.collectLatest { prefs ->
-                _uiState.update { it.copy(selectedMode = prefs.selectedMode) }
+                synchronized(selectionLock) {
+                    preferencesLoaded = true
+                    // Persisted state initializes the session. Once the user makes a choice,
+                    // stale or delayed DataStore emissions must not overwrite that interaction.
+                    if (sessionSelectedMode == null) {
+                        _uiState.update { it.copy(selectedMode = prefs.selectedMode) }
+                    }
+                }
             }
         }
 
@@ -81,9 +91,19 @@ class ClockFixViewModel(
     }
 
     fun selectMode(mode: LocaleMode) {
-        if (_uiState.value.selectedMode == mode) return
+        val shouldPersist =
+            synchronized(selectionLock) {
+                val alreadySelected = _uiState.value.selectedMode == mode
+                if (alreadySelected && (preferencesLoaded || sessionSelectedMode == mode)) {
+                    false
+                } else {
+                    sessionSelectedMode = mode
+                    _uiState.update { it.copy(selectedMode = mode, userNotice = null) }
+                    true
+                }
+            }
+        if (!shouldPersist) return
 
-        _uiState.update { it.copy(selectedMode = mode, userNotice = null) }
         viewModelScope.launch {
             preferencesRepository.saveSelectedLocale(mode.tag)
         }
