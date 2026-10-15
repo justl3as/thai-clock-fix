@@ -21,6 +21,7 @@ require(releaseVersionCode > 0) { "THAI_CLOCK_FIX_VERSION_CODE must be a positiv
 val releaseVersionName =
   providers.environmentVariable("THAI_CLOCK_FIX_VERSION_NAME").orNull?.takeIf { it.isNotBlank() }
     ?: "1.0.0"
+val coverageEnabled = providers.gradleProperty("coverage").map(String::toBoolean).getOrElse(false)
 
 android {
   namespace = "com.thaiclockfix"
@@ -55,8 +56,8 @@ android {
       }
     }
     debug {
-      // Enable JaCoCo unit-test coverage: createDebugUnitTestCoverageReport
-      enableUnitTestCoverage = true
+      // Coverage instrumentation slows normal builds, so keep it opt-in.
+      enableUnitTestCoverage = coverageEnabled
     }
   }
   compileOptions {
@@ -69,12 +70,14 @@ android {
   testOptions {
     unitTests {
       isIncludeAndroidResources = true
-      all { test ->
-        // JaCoCo must count Robolectric sandbox classes, otherwise every
-        // Robolectric-run class reports 0% coverage.
-        test.extensions.configure<JacocoTaskExtension> {
-          isIncludeNoLocationClasses = true
-          excludes = listOf("jdk.internal.*")
+      if (coverageEnabled) {
+        all { test ->
+          // JaCoCo must count Robolectric sandbox classes, otherwise every
+          // Robolectric-run class reports 0% coverage.
+          test.extensions.configure<JacocoTaskExtension> {
+            isIncludeNoLocationClasses = true
+            excludes = listOf("jdk.internal.*")
+          }
         }
       }
     }
