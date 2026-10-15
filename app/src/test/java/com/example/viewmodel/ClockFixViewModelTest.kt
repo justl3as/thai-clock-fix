@@ -221,6 +221,47 @@ class ClockFixViewModelTest {
         assertNull(vm.uiState.value.userNotice)
     }
 
+    @Test fun selectModeUpdatesStateAndPersistsSelection() = runBlocking {
+        val vm = viewModel(FixtureService())
+        vm.selectMode(LocaleMode.ENGLISH)
+        assertEquals(LocaleMode.ENGLISH, vm.uiState.value.selectedMode)
+        // Persistence happens on DataStore's own IO dispatcher — wait for it.
+        val saved = withTimeout(3_000) {
+            PreferencesRepository(app).preferencesFlow.first { it.selectedLocaleTag == "en-US" }
+        }
+        assertEquals(LocaleMode.ENGLISH, saved.selectedMode)
+    }
+
+    @Test fun dialogFlagsRoundTripThroughUiState() {
+        val vm = viewModel(FixtureService())
+        vm.showRestoreDialog(true)
+        vm.showAdbDialog(true)
+        vm.showFaqDialog(true)
+        vm.showShizukuSheet(true)
+        val shown = vm.uiState.value
+        assertTrue(shown.showRestoreConfirmDialog)
+        assertTrue(shown.showAdbCommandsDialog)
+        assertTrue(shown.showFaqDialog)
+        assertTrue(shown.showShizukuSheet)
+        vm.showRestoreDialog(false)
+        vm.showAdbDialog(false)
+        vm.showFaqDialog(false)
+        vm.showShizukuSheet(false)
+        val hidden = vm.uiState.value
+        assertFalse(hidden.showRestoreConfirmDialog)
+        assertFalse(hidden.showAdbCommandsDialog)
+        assertFalse(hidden.showFaqDialog)
+        assertFalse(hidden.showShizukuSheet)
+    }
+
+    @Test fun successfulApplyRaisesNoticeThatDismissClears() = runBlocking {
+        val vm = viewModel(FixtureService())
+        vm.applySelectedLocale()
+        withTimeout(3_000) { vm.uiState.first { it.userNotice != null } }
+        vm.dismissNotice()
+        assertNull(vm.uiState.value.userNotice)
+    }
+
     @Test fun defaultConstructorWiringCreatesUsableViewModel() {
         val vm = androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory
             .getInstance(app)

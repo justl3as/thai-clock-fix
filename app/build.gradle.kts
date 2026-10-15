@@ -47,6 +47,8 @@ android {
     }
     debug {
       // signingConfig = signingConfigs.getByName("debugConfig")
+      // Enable JaCoCo unit-test coverage: createDebugUnitTestCoverageReport
+      enableUnitTestCoverage = true
     }
   }
   compileOptions {
@@ -57,7 +59,19 @@ android {
     compose = true
     buildConfig = true
   }
-  testOptions { unitTests { isIncludeAndroidResources = true } }
+  testOptions {
+    unitTests {
+      isIncludeAndroidResources = true
+      all { test ->
+        // JaCoCo must count Robolectric sandbox classes, otherwise every
+        // Robolectric-run class reports 0% coverage.
+        test.extensions.configure<JacocoTaskExtension> {
+          isIncludeNoLocationClasses = true
+          excludes = listOf("jdk.internal.*")
+        }
+      }
+    }
+  }
   dependenciesInfo {
     includeInApk = false
     includeInBundle = true

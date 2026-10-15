@@ -76,6 +76,28 @@ class HeroClockTest {
         compose.onNodeWithText("English · US").assertDoesNotExist()
     }
 
+    @Test fun tappingUnselectedModeReportsThatMode() {
+        var reported: LocaleMode? = null
+        compose.setContent {
+            ThaiClockFixTheme(dynamicColor = false) {
+                FormatToggleGroup(LocaleMode.THAI_BUDDHIST, { reported = it })
+            }
+        }
+        compose.onNodeWithText("อังกฤษ • ค.ศ.").performClick()
+        org.junit.Assert.assertEquals(LocaleMode.ENGLISH, reported)
+    }
+
+    @Test fun tappingAlreadySelectedModeKeepsReportingItOnce() {
+        var reports = 0
+        compose.setContent {
+            ThaiClockFixTheme(dynamicColor = false) {
+                FormatToggleGroup(LocaleMode.THAI_BUDDHIST, { reports += 1 })
+            }
+        }
+        compose.onNodeWithText("ไทย • พ.ศ.").performClick()
+        org.junit.Assert.assertEquals(0, reports)
+    }
+
     @Test fun unappliedEnglishClockDoesNotShowNor() {
         compose.setContent {
             ThaiClockFixTheme(dynamicColor = false) {

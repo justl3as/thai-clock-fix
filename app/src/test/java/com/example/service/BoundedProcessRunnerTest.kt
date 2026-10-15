@@ -67,7 +67,9 @@ class BoundedProcessRunnerTest {
     }
 
     @Test fun cancellationDestroysProcessPromptly() = runBlocking {
-        val process = ProcessBuilder("/bin/sh", "-c", "exec sleep 2").start()
+        // The process would naturally exit after 10s; both waits together (join + death)
+        // stay far below that, so passing still proves cancellation killed it early.
+        val process = ProcessBuilder("/bin/sh", "-c", "exec sleep 10").start()
         val started = CompletableDeferred<Unit>()
         val job = launch(Dispatchers.IO) {
             BoundedProcessRunner({
@@ -78,7 +80,9 @@ class BoundedProcessRunnerTest {
         started.await()
         try {
             job.cancel()
-            withTimeout(700) { job.join() }
+            withTimeout(2_000) { job.join() }
+            // destroy() sends SIGTERM; delivery is asynchronous, so poll for the exit.
+            withTimeout(2_000) { while (process.isAlive) delay(10) }
             assertFalse(process.isAlive)
         } finally {
             process.destroy()
