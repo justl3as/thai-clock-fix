@@ -4,60 +4,67 @@ plugins {
   alias(libs.plugins.spotless)
 }
 
+val releaseKeystorePath = providers.environmentVariable("KEYSTORE_PATH").orNull
+val releaseStorePassword = providers.environmentVariable("STORE_PASSWORD").orNull
+val releaseKeyAlias = providers.environmentVariable("KEY_ALIAS").orNull
+val releaseKeyPassword = providers.environmentVariable("KEY_PASSWORD").orNull
+val releaseSigningValues =
+  listOf(releaseKeystorePath, releaseStorePassword, releaseKeyAlias, releaseKeyPassword)
+val releaseSigningConfigured = releaseSigningValues.all { !it.isNullOrBlank() }
+require(releaseSigningValues.none { !it.isNullOrBlank() } || releaseSigningConfigured) {
+  "Release signing requires KEYSTORE_PATH, STORE_PASSWORD, KEY_ALIAS, and KEY_PASSWORD together"
+}
+
+val releaseVersionCode =
+  providers.environmentVariable("THAI_CLOCK_FIX_VERSION_CODE").orNull?.toIntOrNull() ?: 1
+require(releaseVersionCode > 0) { "THAI_CLOCK_FIX_VERSION_CODE must be a positive integer" }
+val releaseVersionName =
+  providers.environmentVariable("THAI_CLOCK_FIX_VERSION_NAME").orNull?.takeIf { it.isNotBlank() }
+    ?: "1.0.0"
+
 android {
-  namespace = "com.example"
+  namespace = "com.thaiclockfix"
   compileSdk = 37
 
   defaultConfig {
-    applicationId = "com.aistudio.thaiclockfix.pzkymq"
+    applicationId = "com.thaiclockfix"
     minSdk = 26
-    targetSdk = 36
-    versionCode = 1
-    versionName = "1.0"
-
-    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    targetSdk = 37
+    versionCode = releaseVersionCode
+    versionName = releaseVersionName
   }
 
-  // Do not remove or modify these signingConfigs. They are necessary for building, installing,
-  // and updating Android apps in AI Studio.
   signingConfigs {
-    create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-      storeFile = file(keystorePath)
-      storePassword = System.getenv("STORE_PASSWORD")
-      keyAlias = "upload"
-      keyPassword = System.getenv("KEY_PASSWORD")
-    }
-    create("debugConfig") {
-      storeFile = file("${rootDir}/debug.keystore")
-      storePassword = "android"
-      keyAlias = "androiddebugkey"
-      keyPassword = "android"
+    if (releaseSigningConfigured) {
+      create("release") {
+        storeFile = file(requireNotNull(releaseKeystorePath))
+        storePassword = releaseStorePassword
+        keyAlias = releaseKeyAlias
+        keyPassword = releaseKeyPassword
+      }
     }
   }
 
   buildTypes {
     release {
-      isCrunchPngs = false
-      isMinifyEnabled = false
+      isMinifyEnabled = true
+      isShrinkResources = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      // Do not remove or modify this signingConfig assignment. It is necessary for Android apps in
-      // AI Studio.
-      signingConfig = signingConfigs.getByName("release")
+      if (releaseSigningConfigured) {
+        signingConfig = signingConfigs.getByName("release")
+      }
     }
     debug {
-      // signingConfig = signingConfigs.getByName("debugConfig")
       // Enable JaCoCo unit-test coverage: createDebugUnitTestCoverageReport
       enableUnitTestCoverage = true
     }
   }
   compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
   }
   buildFeatures {
     compose = true
-    buildConfig = true
   }
   testOptions {
     unitTests {
@@ -74,7 +81,7 @@ android {
   }
   dependenciesInfo {
     includeInApk = false
-    includeInBundle = true
+    includeInBundle = false
   }
 }
 
@@ -86,12 +93,10 @@ dependencies {
   implementation(libs.androidx.compose.material3)
   implementation(libs.androidx.compose.ui)
   implementation(libs.androidx.compose.ui.graphics)
-  implementation(libs.androidx.compose.ui.tooling.preview)
   implementation(libs.androidx.core.ktx)
   implementation(libs.androidx.datastore.preferences)
   implementation(libs.androidx.lifecycle.runtime.compose)
   implementation(libs.androidx.lifecycle.runtime.ktx)
-  implementation(libs.androidx.lifecycle.viewmodel.compose)
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.coroutines.core)
   implementation(libs.shizuku.api)
@@ -103,11 +108,6 @@ dependencies {
   testImplementation(libs.junit)
   testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.robolectric)
-  androidTestImplementation(platform(libs.androidx.compose.bom))
-  androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-  androidTestImplementation(libs.androidx.espresso.core)
-  androidTestImplementation(libs.androidx.junit)
-  androidTestImplementation(libs.androidx.runner)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
   debugImplementation(libs.androidx.compose.ui.tooling)
 }

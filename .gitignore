@@ -12,8 +12,6 @@
 # Gradle files
 .gradle/
 build/
-/*/build/
-app/build/
 
 # Kotlin
 .kotlin/
@@ -21,7 +19,6 @@ app/build/
 
 # Local configuration file (SDK path, NDK path, etc.)
 local.properties
-/local.properties
 
 # Android Studio / IntelliJ IDEA
 .idea/

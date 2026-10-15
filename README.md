@@ -1,39 +1,99 @@
 # Thai Clock Fix
 
-แอป Android สำหรับตั้งวันที่และเวลา SystemUI เป็นภาษาไทยแบบ พ.ศ. หรือภาษาอังกฤษ พร้อมรูปแบบเวลา 24 ชั่วโมง ผ่าน Shizuku
+แอป Android สำหรับตั้ง locale ของ SystemUI และรูปแบบเวลา 24 ชั่วโมงผ่าน Shizuku โดยมีโหมดภาษาไทย พ.ศ. และภาษาอังกฤษ ค.ศ. แอปทำงานกับ **ผู้ใช้หลักของ Android (user 0)** และไม่ต้อง Root
 
-ใช้กับ **ผู้ใช้หลักของ Android (user 0)** ทั้งการตั้งภาษาและรูปแบบเวลา ไม่ได้เลือกตาม work profile หรือ secondary user ขณะเปิดแอป ต้องใช้ Android 13 ขึ้นไปที่รองรับ `cmd locale` และ Shizuku v11 ขึ้นไป (dependency ที่ใช้คือ 13.1.5) อุปกรณ์/OEM บางรุ่นอาจไม่อนุญาตให้ตั้งภาษาของ SystemUI
+## Requirements
 
-## เปิดโปรเจกต์และทดสอบ
+- Android 13 ขึ้นไปที่รองรับ `cmd locale`
+- Shizuku v11 ขึ้นไป (โปรเจกต์ใช้ Shizuku 13.1.5)
+- Android SDK 37 สำหรับ build
+- JDK 17 ขึ้นไป
 
-ต้องมี Android SDK 36.1, JDK ที่รองรับ Gradle/AGP และ Android Studio หรือ command line tools
+อุปกรณ์/OEM บางรุ่นอาจไม่อนุญาตให้เปลี่ยน locale ของ SystemUI หรืออาจคืนค่าหลัง reboot/update ระบบ
+
+## Build และตรวจสอบ
 
 ```sh
-cd /Users/pongdanai/Project/thai-clock-fix
-./gradlew :app:testDebugUnitTest :app:assembleDebug
+./gradlew --no-daemon \
+  :app:spotlessCheck \
+  :app:testDebugUnitTest \
+  :app:lintDebug \
+  :app:lintRelease \
+  :app:assembleDebug \
+  :app:assembleRelease
 ```
 
-ถ้ามี dependencies ครบใน cache แล้ว สามารถเพิ่ม `--offline` ได้ APK สำหรับพัฒนาอยู่ที่ `app/build/outputs/apk/debug/app-debug.apk`
+Debug APK อยู่ที่ `app/build/outputs/apk/debug/app-debug.apk` ส่วน `assembleRelease` ที่ไม่มี signing environment จะสร้าง release artifact สำหรับตรวจ R8/resource shrinking เท่านั้น ไม่ควรนำ unsigned artifact ไปเผยแพร่
 
-แอปไม่ใช้ Gemini/Firebase AI และไม่ต้องใช้ API key หรือไฟล์ `.env` ไม่มีการนำ environment properties ไปสร้าง secret constants ใน APK
+แอปไม่มี Gemini, Firebase AI, API key หรือ runtime service ของ Google AI Studio
+
+## Package identity
+
+Production application ID และ namespace คือ:
+
+```text
+com.thaiclockfix
+```
+
+รุ่นต้นแบบจาก AI Studio เคยใช้ `com.aistudio.thaiclockfix.pzkymq` ซึ่งเป็นคนละ package ดังนั้น APK production รุ่นแรกจะไม่อัปเดตทับรุ่นต้นแบบเดิมโดยอัตโนมัติ ให้ทดสอบรุ่นใหม่ให้เรียบร้อยก่อนถอนการติดตั้ง package เก่า
 
 ## ใช้งาน
 
-1. เปิด Shizuku และเริ่ม service ตามคำแนะนำของ Shizuku
-2. เปิด Thai Clock Fix และให้สิทธิ์ Shizuku
-3. เลือกรูปแบบภาษา แล้วกดใช้รูปแบบนี้ แอปจะตรวจผลคำสั่งและอ่านภาษา/รูปแบบเวลา 24 ชั่วโมงกลับก่อนแจ้งสำเร็จ
-4. เมื่อต้องการคืนค่า เลือกเมนู Restore แล้วยืนยัน แอปจะล้างเฉพาะ locale override ของ SystemUI ให้กลับไปใช้ภาษาระบบ **ไม่คืนค่า 12/24 ชั่วโมงเดิม** และไม่รับประกันว่าตัวย่อหรือการแสดงผลเฉพาะ OEM จะกลับเป็นรูปแบบใด
+1. ติดตั้งและเริ่ม Shizuku
+2. เปิด Thai Clock Fix และอนุญาตสิทธิ์ใน Shizuku
+3. เลือกรูปแบบภาษา แล้วกด **ใช้รูปแบบนี้**
+4. แอปจะตั้งเวลา 24 ชั่วโมงและ locale ของ SystemUI จากนั้นอ่านค่ากลับก่อนแจ้งสำเร็จ
+5. เมื่อต้องการคืนค่า ให้เลือก **Restore** เพื่อล้าง locale override ของ SystemUI
 
-Apply, restore และ readback ใช้คิวเดียวกัน หลังสร้าง process แล้ว การรอคำสั่งและอ่าน output มี timeout 10 วินาที และจำกัด stdout/stderr อย่างละ 64 KiB timeout นี้ไม่สามารถรับประกันการตัด synchronous Binder IPC ที่ค้างใน Shizuku server ได้ ข้อผิดพลาดหลังเปลี่ยนค่าไปบางส่วนจะไม่ rollback อัตโนมัติ ให้ตรวจสถานะอีกครั้งหรือใช้ Restore หลังแก้ปัญหาสิทธิ์แล้ว
-
-ไม่มีคำสั่ง restart SystemUI/reboot อัตโนมัติ หาก Shizuku หยุดหรือถอนสิทธิ์ แอปต้องได้รับสิทธิ์ใหม่ก่อนเริ่มคำสั่งต่อไป
+Restore ไม่คืนค่ารูปแบบ 12/24 ชั่วโมงเดิม และไม่มีการ restart SystemUI หรือ reboot อัตโนมัติ
 
 ## Release signing
 
-Release ใช้ `signingConfigs.release` โดยรับ `KEYSTORE_PATH`, `STORE_PASSWORD` และ `KEY_PASSWORD` จาก environment ของผู้ build ใช้ alias `upload` และ default path `my-upload-key.jks` ห้ามแจก debug APK เป็น production release หรือใส่ signing credentials ลงซอร์ส
+Release build รับค่าต่อไปนี้จาก environment เท่านั้น:
+
+- `KEYSTORE_PATH`
+- `STORE_PASSWORD`
+- `KEY_ALIAS`
+- `KEY_PASSWORD`
+- `THAI_CLOCK_FIX_VERSION_NAME` (optional สำหรับ local build)
+- `THAI_CLOCK_FIX_VERSION_CODE` (optional สำหรับ local build)
+
+ถ้ากำหนด signing variable มาไม่ครบ Gradle จะหยุด build แทนการสร้าง APK ด้วย configuration ที่คลุมเครือ ห้าม commit keystore หรือรหัสผ่านลง repository
+
+## GitHub Release
+
+CI อยู่ใน `.github/workflows/ci.yml` และตรวจ formatting, unit tests, lint, debug build และ R8 release build ทุก push/PR
+
+การ push tag รูปแบบ `vMAJOR.MINOR.PATCH` จะเรียก `.github/workflows/release.yml` เพื่อ build, sign, ตรวจลายเซ็น และแนบ APK พร้อม SHA-256 checksum เข้า GitHub Release
+
+ตั้ง GitHub Actions Secrets ก่อน release:
+
+- `ANDROID_KEYSTORE_BASE64` — keystore ที่ encode เป็น Base64
+- `ANDROID_KEYSTORE_PASSWORD`
+- `ANDROID_KEY_ALIAS`
+- `ANDROID_KEY_PASSWORD`
+
+ตัวอย่าง release:
+
+```sh
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+workflow แปลง semantic version เป็น Android `versionCode` แบบ `MAJOR * 1,000,000 + MINOR * 1,000 + PATCH` เพื่อให้การอัปเดต APK จาก GitHub มี versionCode เพิ่มตามเวอร์ชัน
+
+## Play Protect และ sideload
+
+APK ที่แจกผ่าน GitHub ต้องใช้ release key เดิมทุกเวอร์ชันและควรติดตั้งทดสอบบนอุปกรณ์จริงก่อนเผยแพร่ Google Play Protect อาจสแกนแอปที่มาจากนอก Play Store และผล reputation/scanning เป็นสิ่งที่แอปหรือ build script รับประกันล่วงหน้าไม่ได้ ดังนั้น release gate ของโปรเจกต์คือ: signature ถูกต้อง, lint/tests ผ่าน, ติดตั้งบนเครื่องจริงได้ และไม่มีการแจ้งเตือน/บล็อกที่พบระหว่างการทดสอบเครื่องจริง
 
 ## Build integrity
 
-Gradle wrapper pin รุ่น 9.3.1 และ `distributionSha256Sum` ตาม [checksum ที่ Gradle เผยแพร่](https://gradle.org/release-checksums/#v9.3.1) checksum จะตรวจเมื่อ wrapper ดาวน์โหลด distribution ใหม่ ส่วน distribution ที่อยู่ใน cache แล้วควรตรวจ provenance แยกต่างหาก
+Gradle Wrapper pin ที่ 9.3.1 พร้อม `distributionSha256Sum` ใน wrapper configuration ส่วน GitHub Actions ใช้ `gradle/actions/setup-gradle` ซึ่งตรวจ Gradle Wrapper ให้ด้วย
 
-ยังไม่ได้ตั้ง Gradle dependency verification สำหรับ transitive artifacts การสร้าง metadata จาก cache เพียงอย่างเดียวไม่ถือเป็นการตรวจความแท้จริง ต้องทวนกับ checksum/signature จากแหล่งที่เชื่อถือก่อนเปิดใช้ใน release process
+ยังไม่ได้เปิด Gradle dependency verification สำหรับ Maven artifacts ทั้ง dependency graph; ก่อนเพิ่ม metadata ควรสร้างจาก dependency provenance ที่เชื่อถือได้ ไม่ควรรับ checksum จาก cache ที่ยังไม่ตรวจสอบ
+
+## Known technical debt
+
+การรัน shell ผ่าน Shizuku 13.1.5 ยังใช้ `Shizuku.newProcess` ผ่าน reflection ซึ่ง Shizuku ประกาศ deprecated และเตรียมถอดใน API รุ่นถัดไป ควรวาง migration ไป UserService ก่อนอัปเกรด Shizuku major version
+
+Apply, restore และ readback ใช้คิวเดียวกัน มี timeout 10 วินาทีและจำกัด stdout/stderr อย่างละ 64 KiB แต่ synchronous Binder IPC บางช่วงไม่สามารถรับประกันว่าจะถูกตัดด้วย coroutine timeout ได้ และถ้าคำสั่งหนึ่งสำเร็จแต่คำสั่งถัดไปล้มเหลว ระบบอาจอยู่ในสถานะเปลี่ยนบางส่วนจนกว่าจะ readback/restore ใหม่

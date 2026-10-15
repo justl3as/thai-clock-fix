@@ -1,0 +1,117 @@
+name: Release APK
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      KEYSTORE_PATH: ${{ runner.temp }}/thai-clock-fix-release.jks
+      STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up JDK
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
+
+      - name: Install Android SDK 37
+        run: sdkmanager "platforms;android-37"
+
+      - name: Resolve release version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          if [[ ! "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            echo "::error::Release tag must be vMAJOR.MINOR.PATCH"
+            exit 1
+          fi
+          MAJOR="${BASH_REMATCH[1]}"
+          MINOR="${BASH_REMATCH[2]}"
+          PATCH="${BASH_REMATCH[3]}"
+          if (( 10#$MINOR > 999 || 10#$PATCH > 999 )); then
+            echo "::error::MINOR and PATCH must be <= 999"
+            exit 1
+          fi
+          VERSION_CODE=$((10#$MAJOR * 1000000 + 10#$MINOR * 1000 + 10#$PATCH))
+          if (( VERSION_CODE <= 0 || VERSION_CODE > 2100000000 )); then
+            echo "::error::Computed Android versionCode is out of range"
+            exit 1
+          fi
+          echo "THAI_CLOCK_FIX_VERSION_NAME=$VERSION" >> "$GITHUB_ENV"
+          echo "THAI_CLOCK_FIX_VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
+
+      - name: Prepare release signing key
+        shell: bash
+        run: |
+          set -euo pipefail
+          for value in ANDROID_KEYSTORE_BASE64 STORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [[ -z "${!value:-}" ]]; then
+              echo "::error::Missing required release secret: $value"
+              exit 1
+            fi
+          done
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          chmod 600 "$KEYSTORE_PATH"
+
+      - name: Build signed release APK
+        run: >-
+          ./gradlew --no-daemon
+          :app:spotlessCheck
+          :app:testDebugUnitTest
+          :app:lintRelease
+          :app:assembleRelease
+
+      - name: Verify APK signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner -print | sort -V | tail -n 1)"
+          if [[ -z "$APKSIGNER" ]]; then
+            echo "::error::apksigner was not found in Android SDK build-tools"
+            exit 1
+          fi
+          "$APKSIGNER" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk
+
+      - name: Prepare release files
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="ThaiClockFix-${GITHUB_REF_NAME}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "$APK"
+          sha256sum "$APK" > "$APK.sha256"
+          echo "RELEASE_APK=$APK" >> "$GITHUB_ENV"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$RELEASE_APK" "$RELEASE_APK.sha256" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$RELEASE_APK" "$RELEASE_APK.sha256" --title "Thai Clock Fix $GITHUB_REF_NAME" --generate-notes
+          fi
