@@ -23,6 +23,22 @@ Thai Clock Fix เป็นแอป Android สำหรับผู้ใช�
 > [!NOTE]
 > แอปไม่ได้แก้ข้อความ ฟอนต์ หรือ resource ภายใน SystemUI โดยตรง การแสดงผลสุดท้ายยังขึ้นอยู่กับ Android และ OEM ของอุปกรณ์
 
+## App preview
+
+<p align="center">
+  <a href="docs/images/app-preview-home.png"><img src="docs/images/app-preview-home.png" width="30%" alt="Thai Clock Fix showing the Thai Buddhist calendar preview"></a>
+  &nbsp;
+  <a href="docs/images/app-preview-english.png"><img src="docs/images/app-preview-english.png" width="30%" alt="Thai Clock Fix showing the English Gregorian calendar preview"></a>
+  &nbsp;
+  <a href="docs/images/app-preview-faq.png"><img src="docs/images/app-preview-faq.png" width="30%" alt="Thai Clock Fix FAQ and usage guidance"></a>
+</p>
+
+<p align="center">
+  <sub>ไทย • พ.ศ. &nbsp;·&nbsp; อังกฤษ • ค.ศ. &nbsp;·&nbsp; คำถามที่พบบ่อยและคำแนะนำ</sub>
+</p>
+
+ภาพตัวอย่างมาจากแอปจริงบน Android โดยโหมดเวลาและวันที่ในหน้าหลักเป็น preview สำหรับเปรียบเทียบรูปแบบก่อนนำไปใช้กับ SystemUI
+
 ## ทำอะไรได้บ้าง
 
 - ตั้งเวลา Android เป็นรูปแบบ 24 ชั่วโมง
@@ -158,7 +174,7 @@ Tag รูปแบบ `vMAJOR.MINOR.PATCH` จะเรียก release workfl
 
 1. แปลง semantic version เป็น Android `versionCode`
 2. build และ sign release APK ด้วย production key จาก GitHub Actions Secrets
-3. ตรวจลายเซ็นด้วย `apksigner`
+3. ตรวจลายเซ็นด้วย `apksigner` และบังคับให้ signing certificate SHA-256 ตรงกับ production fingerprint ที่ประกาศไว้
 4. สร้าง SHA-256 checksum
 5. แนบ APK และ checksum เข้า GitHub Release
 
