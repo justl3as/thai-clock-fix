@@ -15,6 +15,8 @@ assert_resolves() {
   grep -Fxq "VERSION_NAME=$expected_name" <<<"$output"
   grep -Fxq "VERSION_CODE=$expected_code" <<<"$output"
   grep -Fxq "TAG_NAME=$expected_tag" <<<"$output"
+  grep -Fxq "THAI_CLOCK_FIX_VERSION_NAME=$expected_name" <<<"$output"
+  grep -Fxq "THAI_CLOCK_FIX_VERSION_CODE=$expected_code" <<<"$output"
 }
 
 assert_rejects() {

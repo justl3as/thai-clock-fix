@@ -29,6 +29,10 @@ if (( VERSION_CODE <= 0 || VERSION_CODE > 2100000000 )); then
   exit 1
 fi
 
+# The Release Candidate workflow appends this output to GITHUB_ENV.
+# Keep the Gradle-facing names in sync with app/build.gradle.kts.
 printf 'VERSION_NAME=%s\n' "$VERSION"
 printf 'VERSION_CODE=%s\n' "$VERSION_CODE"
 printf 'TAG_NAME=v%s\n' "$VERSION"
+printf 'THAI_CLOCK_FIX_VERSION_NAME=%s\n' "$VERSION"
+printf 'THAI_CLOCK_FIX_VERSION_CODE=%s\n' "$VERSION_CODE"
