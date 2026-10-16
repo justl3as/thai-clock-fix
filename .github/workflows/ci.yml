@@ -48,8 +48,12 @@ jobs:
           echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
           echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
 
-      - name: Test release certificate verifier
-        run: scripts/verify-release-certificate-test.sh
+      - name: Test release tooling
+        run: |
+          scripts/resolve-release-version-test.sh
+          scripts/verify-apk-metadata-test.sh
+          scripts/verify-release-candidate-test.sh
+          scripts/verify-release-certificate-test.sh
 
       - name: Verify project
         run: >-

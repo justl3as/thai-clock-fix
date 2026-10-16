@@ -159,10 +159,11 @@ A release is ready when:
 - Android release lint passes
 - the minified/resource-shrunk release build succeeds
 - CodeQL Actions and Java/Kotlin analysis pass
-- the APK is signed with the production signing identity
-- `apksigner` verifies the release APK
-- a SHA-256 checksum is published with the APK
-- the release APK installs and completes the supported Shizuku apply/readback flow on a real supported device
+- a production-signed release candidate is built from `main`
+- `apksigner` verifies the release-candidate APK and its signing identity
+- the exact release-candidate APK installs and completes the supported Shizuku apply/readback flow on a real supported device
+- the final release promotes that same verified APK without rebuilding it
+- a SHA-256 checksum and provenance manifest are published with the APK
 
 ## Engineering constraints and technical debt
 
