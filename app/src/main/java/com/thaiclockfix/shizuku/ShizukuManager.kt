@@ -22,6 +22,14 @@ enum class ShizukuStatus {
 class ShizukuManager(
     private val context: Context,
 ) {
+    private var shizukuApi: ShizukuApi = AndroidShizukuApi
+
+    internal constructor(
+        context: Context,
+        shizukuApi: ShizukuApi,
+    ) : this(context) {
+        this.shizukuApi = shizukuApi
+    }
     companion object {
         const val TAG = "ShizukuManager"
         const val SHIZUKU_PACKAGE = "moe.shizuku.privileged.api"
@@ -31,16 +39,21 @@ class ShizukuManager(
     private val _status = MutableStateFlow(ShizukuStatus.UNKNOWN)
     val status: StateFlow<ShizukuStatus> = _status.asStateFlow()
 
+    @Volatile
+    private var binderReady = false
+
     private val binderReceivedListener =
         Shizuku.OnBinderReceivedListener {
             Log.d(TAG, "Shizuku binder received")
+            binderReady = true
             refreshStatus()
         }
 
     private val binderDeadListener =
         Shizuku.OnBinderDeadListener {
             Log.d(TAG, "Shizuku binder died")
-            refreshStatus()
+            binderReady = false
+            updateDisconnectedStatus()
         }
 
     private val requestPermissionResultListener =
@@ -58,20 +71,22 @@ class ShizukuManager(
 
     fun init() {
         try {
-            Shizuku.addBinderReceivedListenerSticky(binderReceivedListener)
-            Shizuku.addBinderDeadListener(binderDeadListener)
-            Shizuku.addRequestPermissionResultListener(requestPermissionResultListener)
+            shizukuApi.addBinderReceivedListenerSticky(binderReceivedListener)
+            shizukuApi.addBinderDeadListener(binderDeadListener)
+            shizukuApi.addRequestPermissionResultListener(requestPermissionResultListener)
         } catch (t: Throwable) {
+            binderReady = false
             Log.e(TAG, "Error registering Shizuku listeners", t)
         }
         refreshStatus()
     }
 
     fun destroy() {
+        binderReady = false
         try {
-            Shizuku.removeBinderReceivedListener(binderReceivedListener)
-            Shizuku.removeBinderDeadListener(binderDeadListener)
-            Shizuku.removeRequestPermissionResultListener(requestPermissionResultListener)
+            shizukuApi.removeBinderReceivedListener(binderReceivedListener)
+            shizukuApi.removeBinderDeadListener(binderDeadListener)
+            shizukuApi.removeRequestPermissionResultListener(requestPermissionResultListener)
         } catch (t: Throwable) {
             Log.e(TAG, "Error unregistering Shizuku listeners", t)
         }
@@ -88,32 +103,40 @@ class ShizukuManager(
 
     fun refreshStatus() {
         if (!isInstalled()) {
+            binderReady = false
             _status.value = ShizukuStatus.NOT_INSTALLED
+            return
+        }
+
+        // Shizuku APIs are only safe after OnBinderReceived has completed the
+        // application attach handshake. A live binder alone is not sufficient.
+        if (!binderReady) {
+            _status.value = ShizukuStatus.SERVICE_STOPPED
             return
         }
 
         val pingOk =
             try {
-                Shizuku.pingBinder()
+                shizukuApi.pingBinder()
             } catch (t: Throwable) {
                 false
             }
 
         if (!pingOk) {
+            binderReady = false
             _status.value = ShizukuStatus.SERVICE_STOPPED
             return
         }
 
         try {
             // Legacy servers do not expose the permission contract required by this app.
-            if (Shizuku.isPreV11()) {
+            if (shizukuApi.isPreV11()) {
                 _status.value = ShizukuStatus.UNKNOWN
                 return
             }
-            val hasPermission = Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
 
             _status.value =
-                if (hasPermission) {
+                if (shizukuApi.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) {
                     ShizukuStatus.READY
                 } else {
                     ShizukuStatus.PERMISSION_REQUIRED
@@ -124,20 +147,46 @@ class ShizukuManager(
         }
     }
 
-    fun requestPermission() {
-        try {
-            if (Shizuku.pingBinder() && !Shizuku.isPreV11()) {
-                if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
-                    Shizuku.requestPermission(REQUEST_CODE_SHIZUKU)
-                } else {
-                    refreshStatus()
-                }
+    fun requestPermission(): Boolean {
+        // Re-evaluate immediately before requesting so a stale UI state cannot
+        // issue a permission call after the Shizuku service has stopped.
+        refreshStatus()
+        if (_status.value != ShizukuStatus.PERMISSION_REQUIRED || !binderReady) {
+            return false
+        }
+
+        return try {
+            if (!shizukuApi.pingBinder()) {
+                binderReady = false
+                _status.value = ShizukuStatus.SERVICE_STOPPED
+                false
+            } else if (shizukuApi.isPreV11()) {
+                _status.value = ShizukuStatus.UNKNOWN
+                false
+            } else if (shizukuApi.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) {
+                _status.value = ShizukuStatus.READY
+                false
             } else {
-                refreshStatus()
+                shizukuApi.requestPermission(REQUEST_CODE_SHIZUKU)
+                true
             }
         } catch (t: Throwable) {
+            // Treat a failed permission IPC as a disconnected service. This
+            // prevents repeated calls against a stale/dead binder.
+            binderReady = false
+            updateDisconnectedStatus()
             Log.e(TAG, "Failed to request Shizuku permission", t)
+            false
         }
+    }
+
+    private fun updateDisconnectedStatus() {
+        _status.value =
+            if (isInstalled()) {
+                ShizukuStatus.SERVICE_STOPPED
+            } else {
+                ShizukuStatus.NOT_INSTALLED
+            }
     }
 
     fun openShizukuApp(): Boolean = try {
