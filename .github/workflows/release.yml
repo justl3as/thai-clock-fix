@@ -89,14 +89,14 @@ jobs:
           fi
 
           RUN_JSON="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RC_RUN_ID")"
-          WORKFLOW_NAME="$(jq -r '.name' <<<"$RUN_JSON")"
+          WORKFLOW_PATH="$(jq -r '.path' <<<"$RUN_JSON")"
           EVENT_NAME="$(jq -r '.event' <<<"$RUN_JSON")"
           CONCLUSION="$(jq -r '.conclusion' <<<"$RUN_JSON")"
           HEAD_BRANCH="$(jq -r '.head_branch' <<<"$RUN_JSON")"
           HEAD_SHA="$(jq -r '.head_sha' <<<"$RUN_JSON")"
 
-          if [[ "$WORKFLOW_NAME" != "Release Candidate" ]]; then
-            echo "::error::Run $RC_RUN_ID is '$WORKFLOW_NAME', not 'Release Candidate'"
+          if [[ "$WORKFLOW_PATH" != ".github/workflows/release-candidate.yml" ]]; then
+            echo "::error::Run $RC_RUN_ID came from '$WORKFLOW_PATH', not the Release Candidate workflow"
             exit 1
           fi
           if [[ "$EVENT_NAME" != "workflow_dispatch" ]]; then
