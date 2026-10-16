@@ -1,8 +1,10 @@
 package com.thaiclockfix
 
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Rule
 import org.junit.Test
@@ -26,5 +28,22 @@ class MainActivityTest {
         compose.onNodeWithTag("hero_clock_time").assertExists()
         compose.onNodeWithText("ตัวอย่างในแอป").assertExists()
         compose.onNodeWithText("ติดตั้ง Shizuku").assertExists()
+    }
+
+    @Test
+    fun overflowUsesShortAboutLabelAndOpensAboutScreen() {
+        compose.onNodeWithTag("action_overflow_button").performClick()
+
+        compose.onNodeWithText("เกี่ยวกับ").assertExists()
+        compose.onNodeWithText("เกี่ยวกับ Thai Clock Fix").assertDoesNotExist()
+        compose.onNodeWithText("เกี่ยวกับ").performClick()
+
+        compose
+            .onNodeWithText("ไม่มีโฆษณา • ไม่มี Analytics • ไม่ใช้อินเทอร์เน็ต")
+            .assertExists()
+        compose.onNodeWithText("ความเป็นส่วนตัว").assertDoesNotExist()
+        compose.onNodeWithContentDescription("ย้อนกลับ").performClick()
+
+        compose.onNodeWithTag("hero_clock_time").assertExists()
     }
 }

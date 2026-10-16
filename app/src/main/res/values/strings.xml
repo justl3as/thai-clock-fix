@@ -8,6 +8,7 @@
     <string name="menu_restore">คืนค่าเริ่มต้นระบบ (Restore)</string>
     <string name="menu_adb_commands">คำสั่ง ADB</string>
     <string name="menu_shizuku_connection">การเชื่อมต่อ Shizuku</string>
+    <string name="menu_about">เกี่ยวกับ</string>
     <string name="format_section_title">รูปแบบเวลาและวันที่</string>
     <string name="error_snackbar_prefix">ข้อผิดพลาด: %1$s</string>
 
@@ -88,6 +89,19 @@
     <string name="faq_tips_title">ข้อแนะนำการใช้งาน</string>
     <string name="faq_tips_body">แนะนำให้คงแอปและ Shizuku ไว้ในเครื่อง เพื่อความสะดวกในการตั้งค่าใหม่เมื่อมีการรีสตาร์ตเครื่อง หรือหลังจากอัปเดตระบบปฏิบัติการ</string>
     <string name="btn_got_it">เข้าใจแล้ว</string>
+
+    <!-- About -->
+    <string name="about_title">เกี่ยวกับ</string>
+    <string name="about_back_cd">ย้อนกลับ</string>
+    <string name="about_version">เวอร์ชัน %1$s</string>
+    <string name="about_description">แก้การแสดง “น.” ต่อท้ายเวลาภาษาไทยบนอุปกรณ์ Android ที่รองรับ</string>
+    <string name="about_source">ซอร์สโค้ด</string>
+    <string name="about_issues">รายงานปัญหา</string>
+    <string name="about_shizuku">Shizuku</string>
+    <string name="about_privacy_summary">ไม่มีโฆษณา • ไม่มี Analytics • ไม่ใช้อินเทอร์เน็ต</string>
+    <string name="about_copy_diagnostics">คัดลอกข้อมูลสำหรับรายงานปัญหา</string>
+    <string name="about_diagnostics_copied">คัดลอกข้อมูลสำหรับรายงานปัญหาแล้ว</string>
+    <string name="about_open_link_failed">ไม่สามารถเปิดลิงก์ได้</string>
 
     <!-- ViewModel notices -->
     <string name="vm_shizuku_not_ready">Shizuku ยังไม่พร้อม กรุณาเชื่อมต่อ Shizuku ก่อนนำไปใช้</string>
