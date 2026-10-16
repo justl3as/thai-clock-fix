@@ -73,10 +73,13 @@ Each release must include:
 
 - a production-signed APK
 - an APK SHA-256 checksum file
+- a release provenance manifest tying the APK to its source commit and release-candidate run
 - a successful APK signature verification
 - a signing certificate SHA-256 match against the repository policy before any release asset is published
 
-The enforced certificate policy is stored in `.github/release-signing-cert.sha256`. The release workflow stops before publishing if the APK is unsigned, invalidly signed, signed by more than one certificate, or signed by a certificate whose SHA-256 digest does not match that policy.
+Production APKs are built once by the **Release Candidate** workflow. The final **Publish Release** workflow downloads that exact Actions artifact and verifies its successful RC run, source commit, version metadata, APK SHA-256, checksum, and signing certificate before publication. Final publication does not rebuild the APK.
+
+The enforced certificate policy is stored in `.github/release-signing-cert.sha256`. Publication stops if the APK is unsigned, invalidly signed, signed by more than one certificate, signed by a certificate whose SHA-256 digest does not match that policy, or if its provenance does not match the selected successful RC run.
 
 Production signing certificate SHA-256:
 
@@ -96,7 +99,7 @@ The signer certificate must match the fingerprint above for an official update t
 
 Production signing material must never be committed to the repository.
 
-Release credentials are supplied to GitHub Actions through repository secrets. The release workflow writes the keystore to the runner's temporary directory with restricted permissions and removes it in an `always()` cleanup step.
+Release credentials are supplied to the Release Candidate workflow through repository secrets. The workflow writes the keystore to the runner's temporary directory with restricted permissions and removes it in an `always()` cleanup step. The final publication workflow does not need the signing key because it promotes the already signed RC artifact without rebuilding it.
 
 Maintainers must keep an independent encrypted backup of the production signing key. GitHub Actions Secrets are not a signing-key backup.
 

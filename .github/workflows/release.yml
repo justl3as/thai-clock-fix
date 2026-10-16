@@ -1,26 +1,63 @@
-name: Release APK
+name: Publish Release
+
+run-name: "Publish ${{ inputs.version }} from RC #${{ inputs.rc_run_id }}"
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (MAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH)"
+        required: true
+        type: string
+      rc_run_id:
+        description: "Successful Release Candidate workflow run ID"
+        required: true
+        type: string
+      e2e_confirmed:
+        description: "I confirm physical-device E2E passed on this exact RC artifact"
+        required: true
+        default: false
+        type: boolean
 
 permissions:
+  actions: read
   contents: write
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: publish-release-${{ inputs.version }}
   cancel-in-progress: false
 
 jobs:
-  release:
+  publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
 
     steps:
-      - name: Checkout
+      - name: Require main branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "::error::Releases must be published from the main workflow definition"
+            exit 1
+          fi
+
+      - name: Require physical-device E2E approval
+        env:
+          E2E_CONFIRMED: ${{ inputs.e2e_confirmed }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$E2E_CONFIRMED" != "true" ]]; then
+            echo "::error::Final publication requires confirmation that physical-device E2E passed on the selected RC artifact"
+            exit 1
+          fi
+
+      - name: Checkout main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          ref: main
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Set up JDK
@@ -29,131 +66,180 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
-
-      - name: Install Android SDK 37
-        shell: bash
-        run: |
-          set -euo pipefail
-          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
-          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -path '*/bin/sdkmanager' -print | sort -V | tail -n 1)"
-          if [[ -z "$SDKMANAGER" ]]; then
-            echo "::error::sdkmanager was not found under $SDK_ROOT/cmdline-tools"
-            exit 1
-          fi
-          yes | "$SDKMANAGER" --licenses >/dev/null || true
-          "$SDKMANAGER" "platforms;android-37.0"
-          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
-          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
-          echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
-
       - name: Resolve release version
-        shell: bash
-        run: |
-          set -euo pipefail
-          VERSION="${GITHUB_REF_NAME#v}"
-          if [[ ! "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
-            echo "::error::Release tag must be vMAJOR.MINOR.PATCH"
-            exit 1
-          fi
-          MAJOR="${BASH_REMATCH[1]}"
-          MINOR="${BASH_REMATCH[2]}"
-          PATCH="${BASH_REMATCH[3]}"
-          if (( 10#$MINOR > 999 || 10#$PATCH > 999 )); then
-            echo "::error::MINOR and PATCH must be <= 999"
-            exit 1
-          fi
-          VERSION_CODE=$((10#$MAJOR * 1000000 + 10#$MINOR * 1000 + 10#$PATCH))
-          if (( VERSION_CODE <= 0 || VERSION_CODE > 2100000000 )); then
-            echo "::error::Computed Android versionCode is out of range"
-            exit 1
-          fi
-          echo "THAI_CLOCK_FIX_VERSION_NAME=$VERSION" >> "$GITHUB_ENV"
-          echo "THAI_CLOCK_FIX_VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
-
-      - name: Validate release secrets
+        id: version
         env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          VERSION_INPUT: ${{ inputs.version }}
         shell: bash
         run: |
           set -euo pipefail
-          for value in ANDROID_KEYSTORE_BASE64 STORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
-            if [[ -z "${!value:-}" ]]; then
-              echo "::error::Missing required release secret: $value"
-              exit 1
-            fi
-          done
+          scripts/resolve-release-version.sh "$VERSION_INPUT" | tee -a "$GITHUB_ENV" "$GITHUB_OUTPUT"
 
-      - name: Prepare release signing key
+      - name: Validate release candidate run
+        id: candidate
         env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          GH_TOKEN: ${{ github.token }}
+          RC_RUN_ID: ${{ inputs.rc_run_id }}
         shell: bash
         run: |
           set -euo pipefail
-          KEYSTORE_PATH="$RUNNER_TEMP/thai-clock-fix-release.p12"
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
-          chmod 600 "$KEYSTORE_PATH"
-          echo "KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
-
-      - name: Build signed release APK
-        env:
-          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: >-
-          ./gradlew --no-daemon
-          :app:spotlessCheck
-          :app:testDebugUnitTest
-          :app:lintRelease
-          :app:assembleRelease
-
-      - name: Verify APK signature and release identity
-        shell: bash
-        run: |
-          set -euo pipefail
-          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner -print | sort -V | tail -n 1)"
-          if [[ -z "$APKSIGNER" ]]; then
-            echo "::error::apksigner was not found in Android SDK build-tools"
+          if [[ ! "$RC_RUN_ID" =~ ^[0-9]+$ ]]; then
+            echo "::error::RC run ID must be numeric"
             exit 1
           fi
+
+          RUN_JSON="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RC_RUN_ID")"
+          WORKFLOW_NAME="$(jq -r '.name' <<<"$RUN_JSON")"
+          EVENT_NAME="$(jq -r '.event' <<<"$RUN_JSON")"
+          CONCLUSION="$(jq -r '.conclusion' <<<"$RUN_JSON")"
+          HEAD_BRANCH="$(jq -r '.head_branch' <<<"$RUN_JSON")"
+          HEAD_SHA="$(jq -r '.head_sha' <<<"$RUN_JSON")"
+
+          if [[ "$WORKFLOW_NAME" != "Release Candidate" ]]; then
+            echo "::error::Run $RC_RUN_ID is '$WORKFLOW_NAME', not 'Release Candidate'"
+            exit 1
+          fi
+          if [[ "$EVENT_NAME" != "workflow_dispatch" ]]; then
+            echo "::error::Release Candidate run must come from workflow_dispatch"
+            exit 1
+          fi
+          if [[ "$CONCLUSION" != "success" ]]; then
+            echo "::error::Release Candidate run did not complete successfully"
+            exit 1
+          fi
+          if [[ "$HEAD_BRANCH" != "main" ]]; then
+            echo "::error::Release Candidate must have been built from main"
+            exit 1
+          fi
+          if [[ ! "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Release Candidate source SHA is invalid"
+            exit 1
+          fi
+
+          echo "RC_SOURCE_SHA=$HEAD_SHA" >> "$GITHUB_ENV"
+          echo "source_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Download signed release candidate
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: ThaiClockFix-v${{ steps.version.outputs.VERSION_NAME }}-rc
+          path: dist
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.rc_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Validate release candidate provenance
+        env:
+          RC_RUN_ID: ${{ inputs.rc_run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          MANIFEST="dist/release-manifest.json"
+          APK="dist/ThaiClockFix-v${VERSION_NAME}.apk"
           EXPECTED_CERT_SHA256="$(
             tr -d '[:space:]:' < .github/release-signing-cert.sha256 |
               tr '[:upper:]' '[:lower:]'
           )"
-          scripts/verify-release-certificate.sh \
-            app/build/outputs/apk/release/app-release.apk \
-            "$APKSIGNER" \
-            "$EXPECTED_CERT_SHA256"
 
-      - name: Prepare release files
+          VERIFY_ARGS=(
+            "$MANIFEST"
+            "$APK"
+            "$VERSION_NAME"
+            "$VERSION_CODE"
+            "$TAG_NAME"
+            "$RC_SOURCE_SHA"
+            "$RC_RUN_ID"
+            "$EXPECTED_CERT_SHA256"
+          )
+          scripts/verify-release-candidate.sh "${VERIFY_ARGS[@]}"
+
+          if ! git cat-file -e "${RC_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            echo "::error::RC source commit is not present in repository history"
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$RC_SOURCE_SHA" HEAD; then
+            echo "::error::RC source commit is not an ancestor of current main"
+            exit 1
+          fi
+
+          ACTUAL_APK_SHA256="$(sha256sum "$APK" | awk '{print $1}')"
+          echo "RELEASE_APK=$APK" >> "$GITHUB_ENV"
+          echo "RELEASE_MANIFEST=$MANIFEST" >> "$GITHUB_ENV"
+          echo "RELEASE_APK_SHA256=$ACTUAL_APK_SHA256" >> "$GITHUB_ENV"
+          echo "RELEASE_CERT_SHA256=$EXPECTED_CERT_SHA256" >> "$GITHUB_ENV"
+
+      - name: Verify promoted APK metadata, signature, and release identity
         shell: bash
         run: |
           set -euo pipefail
-          APK="ThaiClockFix-${GITHUB_REF_NAME}.apk"
-          cp app/build/outputs/apk/release/app-release.apk "$APK"
-          sha256sum "$APK" > "$APK.sha256"
-          echo "RELEASE_APK=$APK" >> "$GITHUB_ENV"
+          BUILD_TOOLS="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}/build-tools"
+          AAPT="$(find "$BUILD_TOOLS" -type f -name aapt -print | sort -V | tail -n 1)"
+          APKSIGNER="$(find "$BUILD_TOOLS" -type f -name apksigner -print | sort -V | tail -n 1)"
+          if [[ -z "$AAPT" || -z "$APKSIGNER" ]]; then
+            echo "::error::aapt/apksigner was not found in Android SDK build-tools"
+            exit 1
+          fi
+          scripts/verify-apk-metadata.sh "$RELEASE_APK" "$AAPT" "com.thaiclockfix" "$VERSION_NAME" "$VERSION_CODE"
+          scripts/verify-release-certificate.sh "$RELEASE_APK" "$APKSIGNER" "$RELEASE_CERT_SHA256"
 
-      - name: Publish GitHub Release
+      - name: Require unused release version
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" "$RELEASE_APK" "$RELEASE_APK.sha256" --clobber
-          else
-            gh release create "$GITHUB_REF_NAME" "$RELEASE_APK" "$RELEASE_APK.sha256" --title "Thai Clock Fix $GITHUB_REF_NAME" --generate-notes
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            echo "::error::GitHub Release $TAG_NAME already exists"
+            exit 1
+          fi
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG_NAME" >/dev/null 2>&1; then
+            echo "::error::Git tag $TAG_NAME already exists"
+            exit 1
           fi
 
-      - name: Remove temporary signing key
-        if: always()
+      - name: Publish exact verified release candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RC_RUN_ID: ${{ inputs.rc_run_id }}
         shell: bash
         run: |
-          if [[ -n "${KEYSTORE_PATH:-}" ]]; then
-            rm -f "$KEYSTORE_PATH"
-          fi
+          set -euo pipefail
+          NOTES="$RUNNER_TEMP/release-verification.md"
+          {
+            echo "## Release verification"
+            echo
+            printf -- '- Release candidate run: #%s\n' "$RC_RUN_ID"
+            printf -- '- Source commit: `%s`\n' "$RC_SOURCE_SHA"
+            printf -- '- APK SHA-256: `%s`\n' "$RELEASE_APK_SHA256"
+            printf -- '- Signing certificate SHA-256: `%s`\n' "$RELEASE_CERT_SHA256"
+            echo
+            echo "This release promotes the exact production-signed APK from the verified release-candidate run; it is not rebuilt during publication."
+          } > "$NOTES"
+
+          NOTES_TEXT="$(cat "$NOTES")"
+          RELEASE_ARGS=(
+            "$TAG_NAME"
+            "$RELEASE_APK"
+            "$RELEASE_APK.sha256"
+            "$RELEASE_MANIFEST"
+            --target "$RC_SOURCE_SHA"
+            --title "Thai Clock Fix $TAG_NAME"
+            --notes "$NOTES_TEXT"
+            --generate-notes
+            --fail-on-no-commits
+          )
+          gh release create "${RELEASE_ARGS[@]}"
+
+      - name: Write publication summary
+        env:
+          RC_RUN_ID: ${{ inputs.rc_run_id }}
+        shell: bash
+        run: |
+          {
+            echo "## Published $TAG_NAME"
+            echo
+            printf -- '- Promoted RC run: `#%s`\n' "$RC_RUN_ID"
+            printf -- '- Source commit: `%s`\n' "$RC_SOURCE_SHA"
+            printf -- '- APK SHA-256: `%s`\n' "$RELEASE_APK_SHA256"
+            echo "- No rebuild was performed during publication."
+          } >> "$GITHUB_STEP_SUMMARY"

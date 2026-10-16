@@ -1,0 +1,228 @@
+name: Release Candidate
+
+run-name: RC ${{ inputs.version }} from ${{ github.ref_name }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to build (MAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH)"
+        required: true
+        type: string
+
+permissions:
+  checks: read
+  contents: read
+
+concurrency:
+  group: release-candidate-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Require main branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "::error::Release candidates must be built from main"
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Require green main checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHECKS_JSON="$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?per_page=100")"
+          REQUIRED_CHECKS=("verify" "Analyze (actions)" "Analyze (java-kotlin)")
+
+          for check_name in "${REQUIRED_CHECKS[@]}"; do
+            conclusion="$(
+              jq -r --arg name "$check_name" '
+                [.check_runs[] | select(.name == $name)]
+                | sort_by(.started_at)
+                | last
+                | .conclusion // ""
+              ' <<<"$CHECKS_JSON"
+            )"
+            if [[ "$conclusion" != "success" ]]; then
+              echo "::error::Required main check '$check_name' is not successful for $GITHUB_SHA (got: ${conclusion:-missing})"
+              exit 1
+            fi
+          done
+
+      - name: Set up JDK
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
+
+      - name: Install Android SDK 37
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -path '*/bin/sdkmanager' -print | sort -V | tail -n 1)"
+          if [[ -z "$SDKMANAGER" ]]; then
+            echo "::error::sdkmanager was not found under $SDK_ROOT/cmdline-tools"
+            exit 1
+          fi
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platforms;android-37.0"
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
+
+      - name: Resolve release version
+        id: version
+        env:
+          VERSION_INPUT: ${{ inputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          scripts/resolve-release-version.sh "$VERSION_INPUT" | tee -a "$GITHUB_ENV" "$GITHUB_OUTPUT"
+
+      - name: Validate release secrets
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for value in ANDROID_KEYSTORE_BASE64 STORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [[ -z "${!value:-}" ]]; then
+              echo "::error::Missing required release secret: $value"
+              exit 1
+            fi
+          done
+
+      - name: Prepare release signing key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          KEYSTORE_PATH="$RUNNER_TEMP/thai-clock-fix-release.p12"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          chmod 600 "$KEYSTORE_PATH"
+          echo "KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
+
+      - name: Build signed release candidate
+        env:
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: >-
+          ./gradlew --no-daemon
+          :app:spotlessCheck
+          :app:testDebugUnitTest
+          :app:lintRelease
+          :app:assembleRelease
+
+      - name: Verify APK metadata, signature, and release identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          BUILD_TOOLS="$ANDROID_HOME/build-tools"
+          AAPT="$(find "$BUILD_TOOLS" -type f -name aapt -print | sort -V | tail -n 1)"
+          APKSIGNER="$(find "$BUILD_TOOLS" -type f -name apksigner -print | sort -V | tail -n 1)"
+          if [[ -z "$AAPT" || -z "$APKSIGNER" ]]; then
+            echo "::error::aapt/apksigner was not found in Android SDK build-tools"
+            exit 1
+          fi
+
+          APK="app/build/outputs/apk/release/app-release.apk"
+          scripts/verify-apk-metadata.sh "$APK" "$AAPT" "com.thaiclockfix" "$VERSION_NAME" "$VERSION_CODE"
+
+          EXPECTED_CERT_SHA256="$(
+            tr -d '[:space:]:' < .github/release-signing-cert.sha256 |
+              tr '[:upper:]' '[:lower:]'
+          )"
+          scripts/verify-release-certificate.sh "$APK" "$APKSIGNER" "$EXPECTED_CERT_SHA256"
+
+      - name: Prepare release candidate artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          APK_NAME="ThaiClockFix-v${VERSION_NAME}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "dist/$APK_NAME"
+
+          (
+            cd dist
+            sha256sum "$APK_NAME" > "$APK_NAME.sha256"
+          )
+
+          APK_SHA256="$(sha256sum "dist/$APK_NAME" | awk '{print $1}')"
+          CERT_SHA256="$(
+            tr -d '[:space:]:' < .github/release-signing-cert.sha256 |
+              tr '[:upper:]' '[:lower:]'
+          )"
+
+          JQ_ARGS=(
+            --arg version "$VERSION_NAME"
+            --argjson versionCode "$VERSION_CODE"
+            --arg tag "$TAG_NAME"
+            --arg sourceSha "$GITHUB_SHA"
+            --arg sourceRef "$GITHUB_REF_NAME"
+            --arg runId "$GITHUB_RUN_ID"
+            --arg apk "$APK_NAME"
+            --arg apkSha256 "$APK_SHA256"
+            --arg certSha256 "$CERT_SHA256"
+          )
+          jq -n "${JQ_ARGS[@]}" '{
+            schemaVersion: 1,
+            version: $version,
+            versionCode: $versionCode,
+            tag: $tag,
+            sourceSha: $sourceSha,
+            sourceRef: $sourceRef,
+            rcRunId: $runId,
+            apk: $apk,
+            apkSha256: $apkSha256,
+            signingCertificateSha256: $certSha256
+          }' > dist/release-manifest.json
+
+      - name: Upload signed release candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ThaiClockFix-v${{ steps.version.outputs.VERSION_NAME }}-rc
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Write release candidate summary
+        shell: bash
+        run: |
+          {
+            echo "## Thai Clock Fix release candidate"
+            echo
+            printf -- '- Version: `%s`\n' "$VERSION_NAME"
+            printf -- '- Version code: `%s`\n' "$VERSION_CODE"
+            printf -- '- Source commit: `%s`\n' "$GITHUB_SHA"
+            printf -- '- RC run ID: `%s`\n' "$GITHUB_RUN_ID"
+            echo
+            echo "Download the uploaded artifact and complete the physical-device E2E checklist before publishing."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove temporary signing key
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/thai-clock-fix-release.p12"

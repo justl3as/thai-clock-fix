@@ -170,15 +170,19 @@ Pull request และ push เข้า `main` ต้องผ่าน `verify
 
 CodeQL ตรวจ GitHub Actions และ Java/Kotlin แยกจาก CI ปกติ โดย Java/Kotlin ใช้ manual compile ที่ปิด Gradle build cache สำหรับงานวิเคราะห์ เพื่อให้ CodeQL เห็น source compilation ทุกครั้ง
 
-Tag รูปแบบ `vMAJOR.MINOR.PATCH` จะเรียก release workflow เพื่อ:
+การออก release ใช้สองขั้นเพื่อให้ APK ที่ทดสอบเป็นไฟล์เดียวกับไฟล์ที่เผยแพร่จริง:
 
-1. แปลง semantic version เป็น Android `versionCode`
-2. build และ sign release APK ด้วย production key จาก GitHub Actions Secrets
-3. ตรวจลายเซ็นด้วย `apksigner` และบังคับให้ signing certificate SHA-256 ตรงกับ production fingerprint ที่ประกาศไว้
-4. สร้าง SHA-256 checksum
-5. แนบ APK และ checksum เข้า GitHub Release
+1. รัน **Release Candidate** จาก `main` พร้อม version ที่ต้องการ
+2. workflow build/sign APK ด้วย production key, ตรวจ certificate fingerprint และอัปโหลด APK + checksum + provenance manifest เป็น Actions artifact
+3. ดาวน์โหลด RC artifact ก้อนนั้นไปทำ physical-device E2E
+4. เมื่อผ่านแล้ว รัน **Publish Release** ด้วย version และ RC run ID
+5. publish workflow ตรวจ provenance, source commit, APK SHA-256 และ signing certificate ซ้ำ
+6. สร้าง tag และ GitHub Release จาก APK ก้อนเดิมโดย **ไม่ rebuild**
+
+รายละเอียดสำหรับ maintainer อยู่ใน [docs/RELEASING.md](docs/RELEASING.md)
 
 ## Project docs
 
+- [docs/RELEASING.md](docs/RELEASING.md) ขั้นตอนสร้าง RC, E2E และ promote เป็น final release
 - [PRODUCT.md](PRODUCT.md) กำหนด product scope, user journey, success criteria, non-goals และข้อจำกัดทางเทคนิค
 - [SECURITY.md](SECURITY.md) อธิบาย security model, vulnerability reporting, APK signing และ supply-chain controls
