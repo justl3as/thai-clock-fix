@@ -93,25 +93,13 @@
     <!-- About -->
     <string name="about_title">เกี่ยวกับ</string>
     <string name="about_back_cd">ย้อนกลับ</string>
-    <string name="about_version">เวอร์ชัน %1$s (%2$d)</string>
-    <string name="about_description">ปรับรูปแบบเวลาและวันที่ของ SystemUI เพื่อแก้การแสดง “น.” ต่อท้ายเวลาภาษาไทยบนอุปกรณ์ที่รองรับ</string>
-    <string name="about_privacy_title">ความเป็นส่วนตัว</string>
-    <string name="about_privacy_no_internet">แอปไม่มีสิทธิ์เข้าถึงอินเทอร์เน็ต</string>
-    <string name="about_privacy_no_ads_analytics">ไม่มีโฆษณาและไม่มีระบบวิเคราะห์การใช้งาน</string>
-    <string name="about_privacy_local_only">เก็บเฉพาะการตั้งค่าที่จำเป็นภายในเครื่อง</string>
-    <string name="about_privacy_shizuku">ใช้ Shizuku เฉพาะเมื่อต้องเรียกคำสั่งระบบที่จำเป็น โดยไม่ต้อง Root</string>
-    <string name="about_project_title">โปรเจกต์</string>
+    <string name="about_version">เวอร์ชัน %1$s</string>
+    <string name="about_description">แก้การแสดง “น.” ต่อท้ายเวลาภาษาไทยบนอุปกรณ์ Android ที่รองรับ</string>
     <string name="about_source">ซอร์สโค้ด</string>
-    <string name="about_releases">ดาวน์โหลดเวอร์ชันล่าสุด</string>
     <string name="about_issues">รายงานปัญหา</string>
-    <string name="about_security">นโยบายความปลอดภัย</string>
-    <string name="about_shizuku_title">ขับเคลื่อนด้วย Shizuku</string>
-    <string name="about_shizuku_body">Shizuku ช่วยให้แอปเรียกคำสั่งระบบด้วยสิทธิ์ที่ Shizuku ได้รับจาก ADB โดยไม่ต้อง Root</string>
-    <string name="about_shizuku_link">ดูโครงการ Shizuku</string>
-    <string name="about_support_title">ข้อมูลสำหรับช่วยตรวจสอบปัญหา</string>
-    <string name="about_support_body">คัดลอกข้อมูลเวอร์ชัน อุปกรณ์ Android และสถานะ Shizuku เพื่อแนบตอนรายงานปัญหา โดยไม่รวม serial หรือ Android ID</string>
+    <string name="about_shizuku">Shizuku</string>
+    <string name="about_privacy_summary">ไม่มีโฆษณา • ไม่มี Analytics • ไม่ใช้อินเทอร์เน็ต</string>
     <string name="about_copy_diagnostics">คัดลอกข้อมูลสำหรับรายงานปัญหา</string>
-    <string name="about_application_id">Application ID</string>
     <string name="about_diagnostics_copied">คัดลอกข้อมูลสำหรับรายงานปัญหาแล้ว</string>
     <string name="about_open_link_failed">ไม่สามารถเปิดลิงก์ได้</string>
 

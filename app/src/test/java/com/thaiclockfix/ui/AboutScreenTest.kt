@@ -22,15 +22,13 @@ class AboutScreenTest {
     @get:Rule val compose = createComposeRule()
 
     @Test
-    fun aboutScreenShowsIdentityPrivacyAndProjectLinks() {
+    fun aboutScreenKeepsOnlyMinimalUserFacingInformation() {
         var openedUrl: String? = null
 
         compose.setContent {
             ThaiClockFixTheme(dynamicColor = false) {
                 AboutScreen(
                     versionName = "9.8.7",
-                    versionCode = 9080007,
-                    applicationId = "com.thaiclockfix",
                     diagnosticInfo = "fixture diagnostics",
                     onBack = {},
                     onOpenUrl = { openedUrl = it },
@@ -40,17 +38,28 @@ class AboutScreenTest {
         }
 
         compose.onNodeWithText("Thai Clock Fix").assertExists()
-        compose.onNodeWithText("เวอร์ชัน 9.8.7 (9080007)").assertExists()
-        compose.onNodeWithText("ความเป็นส่วนตัว").assertExists()
-        compose.onNodeWithText("แอปไม่มีสิทธิ์เข้าถึงอินเทอร์เน็ต").assertExists()
-        compose.onNodeWithText("com.thaiclockfix").performScrollTo().assertExists()
+        compose.onNodeWithText("เวอร์ชัน 9.8.7").assertExists()
+        compose
+            .onNodeWithText(
+                "แก้การแสดง “น.” ต่อท้ายเวลาภาษาไทยบนอุปกรณ์ Android ที่รองรับ",
+            )
+            .assertExists()
+        compose
+            .onNodeWithText("ไม่มีโฆษณา • ไม่มี Analytics • ไม่ใช้อินเทอร์เน็ต")
+            .assertExists()
+
+        compose.onNodeWithText("เวอร์ชัน 9.8.7 (9080007)").assertDoesNotExist()
+        compose.onNodeWithText("Application ID").assertDoesNotExist()
+        compose.onNodeWithText("com.thaiclockfix").assertDoesNotExist()
+        compose.onNodeWithText("ดาวน์โหลดเวอร์ชันล่าสุด").assertDoesNotExist()
+        compose.onNodeWithText("นโยบายความปลอดภัย").assertDoesNotExist()
+        compose.onNodeWithText("ความเป็นส่วนตัว").assertDoesNotExist()
+        compose.onNodeWithText("ข้อมูลสำหรับช่วยตรวจสอบปัญหา").assertDoesNotExist()
 
         val links =
             listOf(
                 "about_link_source" to "https://github.com/justl3as/thai-clock-fix",
-                "about_link_releases" to "https://github.com/justl3as/thai-clock-fix/releases/latest",
                 "about_link_issues" to "https://github.com/justl3as/thai-clock-fix/issues",
-                "about_link_security" to "https://github.com/justl3as/thai-clock-fix/security/policy",
                 "about_link_shizuku" to "https://github.com/RikkaApps/Shizuku",
             )
 
@@ -70,9 +79,7 @@ class AboutScreenTest {
             ThaiClockFixTheme(dynamicColor = false) {
                 AboutScreen(
                     versionName = "9.8.7",
-                    versionCode = 9080007,
-                    applicationId = "com.thaiclockfix",
-                    diagnosticInfo = "Thai Clock Fix 9.8.7\nShizuku: SERVICE_STOPPED",
+                    diagnosticInfo = "Thai Clock Fix 9.8.7 (9080007)\nShizuku: SERVICE_STOPPED",
                     onBack = {},
                     onOpenUrl = {},
                     onCopyDiagnostic = { copiedText = it },
@@ -83,6 +90,9 @@ class AboutScreenTest {
         compose.onNodeWithTag("about_copy_diagnostics").performScrollTo().performClick()
         compose.waitForIdle()
 
-        assertEquals("Thai Clock Fix 9.8.7\nShizuku: SERVICE_STOPPED", copiedText)
+        assertEquals(
+            "Thai Clock Fix 9.8.7 (9080007)\nShizuku: SERVICE_STOPPED",
+            copiedText,
+        )
     }
 }

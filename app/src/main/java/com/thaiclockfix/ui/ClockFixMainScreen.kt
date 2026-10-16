@@ -106,8 +106,6 @@ fun ClockFixMainScreen(
 
         AboutScreen(
             versionName = versionName,
-            versionCode = versionCode,
-            applicationId = context.packageName,
             diagnosticInfo = diagnosticInfo,
             onBack = { showAboutScreen = false },
             onOpenUrl = { url -> openExternalUrl(context, url) },
@@ -389,7 +387,7 @@ private fun copyDiagnosticInfo(
     val clipboard = context.getSystemService(ClipboardManager::class.java)
     clipboard.setPrimaryClip(
         ClipData.newPlainText(
-            context.getString(R.string.about_support_title),
+            context.getString(R.string.about_copy_diagnostics),
             text,
         ),
     )

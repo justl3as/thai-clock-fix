@@ -38,8 +38,10 @@ class MainActivityTest {
         compose.onNodeWithText("เกี่ยวกับ Thai Clock Fix").assertDoesNotExist()
         compose.onNodeWithText("เกี่ยวกับ").performClick()
 
-        compose.onNodeWithText("ความเป็นส่วนตัว").assertExists()
-        compose.onNodeWithText("แอปไม่มีสิทธิ์เข้าถึงอินเทอร์เน็ต").assertExists()
+        compose
+            .onNodeWithText("ไม่มีโฆษณา • ไม่มี Analytics • ไม่ใช้อินเทอร์เน็ต")
+            .assertExists()
+        compose.onNodeWithText("ความเป็นส่วนตัว").assertDoesNotExist()
         compose.onNodeWithContentDescription("ย้อนกลับ").performClick()
 
         compose.onNodeWithTag("hero_clock_time").assertExists()
