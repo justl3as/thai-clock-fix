@@ -1,5 +1,12 @@
 package com.thaiclockfix.ui
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,6 +26,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Restore
@@ -39,13 +47,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.pm.PackageInfoCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.thaiclockfix.R
 import com.thaiclockfix.model.PrimaryAction
@@ -72,9 +83,39 @@ fun ClockFixMainScreen(
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     var showOverflowMenu by remember { mutableStateOf(false) }
+    var showAboutScreen by rememberSaveable { mutableStateOf(false) }
     val errorPrefix = stringResource(R.string.error_snackbar_prefix)
+
+    if (showAboutScreen) {
+        val packageInfo = remember(context) {
+            context.packageManager.getPackageInfo(context.packageName, 0)
+        }
+        val versionName = packageInfo.versionName ?: "unknown"
+        val versionCode = PackageInfoCompat.getLongVersionCode(packageInfo)
+        val diagnosticInfo = remember(uiState.shizukuStatus, versionName, versionCode) {
+            buildDiagnosticInfo(
+                context = context,
+                versionName = versionName,
+                versionCode = versionCode,
+                shizukuStatus = uiState.shizukuStatus.name,
+            )
+        }
+
+        AboutScreen(
+            versionName = versionName,
+            versionCode = versionCode,
+            applicationId = context.packageName,
+            diagnosticInfo = diagnosticInfo,
+            onBack = { showAboutScreen = false },
+            onOpenUrl = { url -> openExternalUrl(context, url) },
+            onCopyDiagnostic = { text -> copyDiagnosticInfo(context, text) },
+            modifier = modifier,
+        )
+        return
+    }
 
     LaunchedEffect(uiState.userNotice) {
         uiState.userNotice?.let { notice ->
@@ -184,6 +225,19 @@ fun ClockFixMainScreen(
                                 onClick = {
                                     showOverflowMenu = false
                                     viewModel.showShizukuSheet(true)
+                                },
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.menu_about)) },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Info,
+                                        contentDescription = null,
+                                    )
+                                },
+                                onClick = {
+                                    showOverflowMenu = false
+                                    showAboutScreen = true
                                 },
                             )
                         }
@@ -299,4 +353,45 @@ fun ClockFixMainScreen(
             onDismiss = { viewModel.showFaqDialog(false) },
         )
     }
+}
+
+private fun buildDiagnosticInfo(
+    context: Context,
+    versionName: String,
+    versionCode: Long,
+    shizukuStatus: String,
+): String = buildString {
+    appendLine("Thai Clock Fix $versionName ($versionCode)")
+    appendLine("Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
+    appendLine("Device: ${Build.MANUFACTURER} ${Build.MODEL}")
+    appendLine("Shizuku: $shizukuStatus")
+    append("App ID: ${context.packageName}")
+}
+
+private fun openExternalUrl(
+    context: Context,
+    url: String,
+) {
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+        addCategory(Intent.CATEGORY_BROWSABLE)
+    }
+    runCatching {
+        context.startActivity(intent)
+    }.onFailure {
+        Toast.makeText(context, R.string.about_open_link_failed, Toast.LENGTH_SHORT).show()
+    }
+}
+
+private fun copyDiagnosticInfo(
+    context: Context,
+    text: String,
+) {
+    val clipboard = context.getSystemService(ClipboardManager::class.java)
+    clipboard.setPrimaryClip(
+        ClipData.newPlainText(
+            context.getString(R.string.about_support_title),
+            text,
+        ),
+    )
+    Toast.makeText(context, R.string.about_diagnostics_copied, Toast.LENGTH_SHORT).show()
 }
