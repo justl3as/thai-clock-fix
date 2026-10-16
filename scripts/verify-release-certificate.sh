@@ -38,23 +38,29 @@ fi
 
 printf '%s\n' "$VERIFY_OUTPUT"
 
-DIGEST_LINES="$(
+CERT_DIGESTS="$(
   printf '%s\n' "$VERIFY_OUTPUT" |
-    sed -nE 's/^Signer #[0-9]+ certificate SHA-256 digest:[[:space:]]*//p'
+    sed -nE \
+      -e 's/^Signer #[0-9]+ certificate SHA-256 digest:[[:space:]]*//p' \
+      -e 's/^V[0-9.]+ Signer: certificate SHA-256 digest:[[:space:]]*//p' |
+    sed 's/[[:space:]:]//g' |
+    tr '[:upper:]' '[:lower:]' |
+    sed '/^$/d' |
+    sort -u
 )"
-SIGNER_COUNT="$(
-  printf '%s\n' "$DIGEST_LINES" |
+CERT_COUNT="$(
+  printf '%s\n' "$CERT_DIGESTS" |
     sed '/^[[:space:]]*$/d' |
     wc -l |
     tr -d '[:space:]'
 )"
 
-if [[ "$SIGNER_COUNT" != "1" ]]; then
-  echo "::error::Expected exactly one APK signing certificate, found $SIGNER_COUNT"
+if [[ "$CERT_COUNT" != "1" ]]; then
+  echo "::error::Expected exactly one unique APK signing certificate, found $CERT_COUNT"
   exit 1
 fi
 
-ACTUAL_CERT_SHA256="$(normalize_digest "$(printf '%s\n' "$DIGEST_LINES" | sed -n '1p')")"
+ACTUAL_CERT_SHA256="$(printf '%s\n' "$CERT_DIGESTS" | sed -n '1p')"
 if [[ ! "$ACTUAL_CERT_SHA256" =~ ^[0-9a-f]{64}$ ]]; then
   echo "::error::Could not parse a valid signer certificate SHA-256 digest from apksigner output"
   exit 1

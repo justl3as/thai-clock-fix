@@ -29,6 +29,14 @@ case "${FAKE_MODE:-match}" in
     printf 'Verifies\n'
     printf 'Signer #1 certificate SHA-256 digest: %s\n' "${FAKE_CERT_SHA256:?}"
     ;;
+  v2-label)
+    printf 'Verified using v2 scheme (APK Signature Scheme v2): true\n'
+    printf 'V2 Signer: certificate SHA-256 digest: %s\n' "${FAKE_CERT_SHA256:?}"
+    ;;
+  multi-scheme-same)
+    printf 'V2 Signer: certificate SHA-256 digest: %s\n' "${FAKE_CERT_SHA256:?}"
+    printf 'V3 Signer: certificate SHA-256 digest: %s\n' "${FAKE_CERT_SHA256:?}"
+    ;;
   mismatch)
     printf 'Verifies\n'
     printf 'Signer #1 certificate SHA-256 digest: %064d\n' 0
@@ -50,6 +58,12 @@ EOF
 chmod +x "$FAKE_APKSIGNER"
 
 FAKE_MODE=match FAKE_CERT_SHA256="$EXPECTED" \
+  "$VERIFIER" "$APK" "$FAKE_APKSIGNER" "$EXPECTED" >/dev/null
+
+FAKE_MODE=v2-label FAKE_CERT_SHA256="$EXPECTED" \
+  "$VERIFIER" "$APK" "$FAKE_APKSIGNER" "$EXPECTED" >/dev/null
+
+FAKE_MODE=multi-scheme-same FAKE_CERT_SHA256="$EXPECTED" \
   "$VERIFIER" "$APK" "$FAKE_APKSIGNER" "$EXPECTED" >/dev/null
 
 if FAKE_MODE=mismatch FAKE_CERT_SHA256="$EXPECTED" \
